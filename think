@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+
+use think\App;
+
+require __DIR__ . '/vendor/autoload.php';
+
+$app = new App();
+$console = $app->console;
+$console->run();

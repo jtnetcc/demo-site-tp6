@@ -1,0 +1,32 @@
+{layout name="layout/base" /}
+<section class="section page-head">
+    <div>
+        <p class="page-kicker">SEARCH</p>
+        <h1>全站搜索</h1>
+        <p>输入关键词，快速查找视频和课程内容。</p>
+    </div>
+</section>
+<section class="filter-card">
+    <form class="filter-grid search" method="get" action="/search">
+        <input name="q" value="{$q|default=''}" placeholder="搜索视频或课程">
+        <input type="hidden" name="type" value="{$type|default='all'}">
+        <button class="button" type="submit">搜索</button>
+    </form>
+    {if condition="$q"}
+    <div class="chip-row" style="margin-top:14px">
+        <a class="chip {if condition="$type == 'all'"}active{/if}" href="/search?q={$q}&type=all">全部</a>
+        <a class="chip {if condition="$type == 'videos'"}active{/if}" href="/search?q={$q}&type=videos">视频</a>
+        <a class="chip {if condition="$type == 'courses'"}active{/if}" href="/search?q={$q}&type=courses">课程</a>
+    </div>
+    {/if}
+</section>
+{if condition="$q"}
+    {if condition="$type != 'courses'"}
+    <section class="section"><div class="section-title"><h2>视频结果</h2></div><div class="grid">{volist name="videos" id="video" empty="<div class='empty-state'>没有匹配视频</div>"}{include file="partials/video_card" /}{/volist}</div></section>
+    {/if}
+    {if condition="$type != 'videos'"}
+    <section class="section"><div class="section-title"><h2>课程结果</h2></div><div class="grid">{volist name="courses" id="course" empty="<div class='empty-state'>没有匹配课程</div>"}{include file="partials/course_card" /}{/volist}</div></section>
+    {/if}
+{else /}
+<section class="empty-state">输入关键词后，可以按“全部 / 视频 / 课程”切换结果类型。</section>
+{/if}

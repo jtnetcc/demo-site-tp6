@@ -1,0 +1,16 @@
+{layout name="layout/base" /}
+<section class="auth-shell">
+    <div class="auth-aside"><p class="page-kicker">JOIN US</p><h1>创建学习账号</h1><p class="muted">注册后即可收藏内容、记录观看进度，并按会员等级访问课程。</p></div>
+    <div class="card auth-card">
+        <h1>注册</h1>
+        <form method="post" action="/register">
+            <label>用户名</label><input name="username" required autocomplete="username">
+            <label>显示名</label><input name="display_name" autocomplete="name">
+            <label>邮箱</label><input name="email" type="email" autocomplete="email">
+            <label>手机号</label><input name="phone" type="tel" autocomplete="tel">
+            <label>密码</label><input name="password" type="password" required autocomplete="new-password">
+            <div class="section"><button class="button" type="submit">创建账号</button></div>
+        </form>
+        <p class="muted">已有账号？<a href="/login">去登录</a></p>
+    </div>
+</section>

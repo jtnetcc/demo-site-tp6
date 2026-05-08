@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+runtime/
+public/uploads/
+dist/
+vendor/
+node_modules/
+*.log
+*.tar.gz
+.DS_Store
+.metadata_never_index
+PROMPTS.md
+THINKPHP_REWRITE_PROMPT*.md

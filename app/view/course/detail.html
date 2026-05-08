@@ -1,0 +1,26 @@
+{layout name="layout/base" /}
+<section class="section card">
+    <div class="page-head">
+        <div>
+            <p class="page-kicker">COURSE</p>
+            <h1>{$course.title}</h1>
+            <div class="meta"><span class="tag">{$course.required_level|default='登录可学'}</span></div>
+        </div>
+        <div class="page-actions"><a class="btn secondary" href="/courses">返回课程列表</a></div>
+    </div>
+    <p class="muted">{$course.description|default='暂无简介'}</p>
+    {if condition="$access.allowed"}<div class="flash ok" role="status"><div><strong>可以学习</strong><span>{$access.reason}</span></div></div>{else /}<div class="flash err" role="alert"><div><strong>暂不可学习</strong><span>{$access.reason}</span></div></div>{/if}
+</section>
+<section class="section">
+    <div class="section-title"><h2>课时列表</h2><span class="badge gray">按顺序学习</span></div>
+    <div class="grid">
+        {volist name="lessons" id="lesson" empty="<div class='empty-state'>暂无课时</div>"}
+        <article class="card">
+            <span class="badge gray">课时</span>
+            <h3>{$lesson.title}</h3>
+            <p class="muted">{$lesson.summary|default='暂无简介'}</p>
+            {if condition="$access.allowed && $lesson.video_object_key"}<a class="button" href="/course/{$course.id}/lesson/{$lesson.id}">进入学习</a>{elseif condition="$access.allowed" /}<span class="btn secondary disabled">资源准备中</span>{elseif condition="!$currentUser" /}<a class="btn secondary" href="/login?returnTo=/course/{$course.id}">登录后学习</a>{else /}<span class="btn secondary disabled">权限不足</span>{/if}
+        </article>
+        {/volist}
+    </div>
+</section>

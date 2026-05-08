@@ -1,0 +1,34 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form class="filter" method="get" action="/admin/comments">
+        <input name="q" value="{$filters.q|default=''}" placeholder="评论内容/用户名/视频标题">
+        <select name="status" data-current="{$filters.status|default=''}"><option value="">全部状态</option><option value="VISIBLE">VISIBLE</option><option value="HIDDEN">HIDDEN</option></select>
+        <input name="user_id" value="{$filters.user_id|default=''}" placeholder="用户编号">
+        <input name="video_id" value="{$filters.video_id|default=''}" placeholder="视频编号">
+        <button type="submit">筛选</button>
+    </form>
+</section>
+<section class="card">
+    <table class="table">
+        <tr><th>编号</th><th>用户</th><th>视频</th><th>内容</th><th>状态</th><th>时间</th><th>操作</th></tr>
+        {volist name="comments" id="comment" empty="<tr><td colspan='7'>暂无评论</td></tr>"}
+        <tr>
+            <td>{$comment.id}</td>
+            <td>{$comment.user.username|default=''}</td>
+            <td>{$comment.video.title|default=''}</td>
+            <td>{$comment.content}</td>
+            <td><span class="badge">{$comment.status}</span></td>
+            <td>{$comment.created_at}</td>
+            <td class="actions">
+                {if condition="$comment.status == 'VISIBLE'"}
+                <form class="inline-form" method="post" action="/admin/comments/{$comment.id}/hide">{include file="admin/partials/csrf" /}<button class="secondary" type="submit">隐藏</button></form>
+                {else /}
+                <form class="inline-form" method="post" action="/admin/comments/{$comment.id}/show">{include file="admin/partials/csrf" /}<button class="secondary" type="submit">显示</button></form>
+                {/if}
+                <form class="inline-form" method="post" action="/admin/comments/{$comment.id}/delete">{include file="admin/partials/csrf" /}<button class="danger" type="submit">删除</button></form>
+            </td>
+        </tr>
+        {/volist}
+    </table>
+</section>
+<section>{$comments|raw}</section>

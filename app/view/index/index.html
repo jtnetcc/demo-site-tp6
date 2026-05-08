@@ -1,0 +1,34 @@
+{layout name="layout/base" /}
+<section class="hero">
+    <div class="hero-card">
+        <p class="page-kicker">{$siteSettings.other.homepage.hero.kicker}</p>
+        <h1>{$siteSettings.other.homepage.hero.title}</h1>
+        <p>{$siteSettings.other.homepage.hero.description}</p>
+        <div class="section links">
+            <a class="button" href="{$siteSettings.other.homepage.hero.primaryButtonUrl}">{$siteSettings.other.homepage.hero.primaryButtonText}</a>
+            <a class="btn secondary" href="{$siteSettings.other.homepage.hero.secondaryButtonUrl}">{$siteSettings.other.homepage.hero.secondaryButtonText}</a>
+            {if condition="$currentUser"}<a class="btn secondary" href="{$siteSettings.other.homepage.hero.userButtonUrl}">{$siteSettings.other.homepage.hero.userButtonText}</a>{else /}<a class="btn secondary" href="{$siteSettings.other.homepage.hero.guestButtonUrl}">{$siteSettings.other.homepage.hero.guestButtonText}</a>{/if}
+        </div>
+    </div>
+</section>
+<section class="section grid compact home-feature-grid">
+    {volist name="siteSettings.other.homepage.featureCards" id="card"}<article class="card"><span class="badge">{$card.badge}</span><h3>{$card.title}</h3><p class="muted">{$card.description}</p></article>{/volist}
+</section>
+<section class="section">
+    <div class="section-title"><h2>热门分类</h2><a href="/search">全部搜索</a></div>
+    <div class="chip-row">
+        {volist name="categories" id="category" empty="<span class='muted'>暂无分类</span>"}<a class="chip" href="/videos?category_id={$category.id}">{$category.name}</a>{/volist}
+    </div>
+</section>
+<section class="section">
+    <div class="section-title"><h2>热门视频</h2><a href="/videos?sort=popular">更多</a></div>
+    <div class="grid">{volist name="popularVideos" id="video" empty="<div class='empty-state'>暂无热门视频</div>"}{include file="partials/video_card" /}{/volist}</div>
+</section>
+<section class="section">
+    <div class="section-title"><h2>最新视频</h2><a href="/videos">更多</a></div>
+    <div class="grid">{volist name="latestVideos" id="video" empty="<div class='empty-state'>暂无最新视频</div>"}{include file="partials/video_card" /}{/volist}</div>
+</section>
+<section class="section">
+    <div class="section-title"><h2>最新课程</h2><a href="/courses">更多</a></div>
+    <div class="grid">{volist name="latestCourses" id="course" empty="<div class='empty-state'>暂无课程</div>"}{include file="partials/course_card" /}{/volist}</div>
+</section>

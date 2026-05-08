@@ -1,0 +1,7 @@
+<nav class="account-nav" aria-label="个人中心导航">
+    <a href="/me" class="{if condition="$currentPath == '/me'"}active{/if}" {if condition="$currentPath == '/me'"}aria-current="page"{/if}>概览</a>
+    <a href="/my-courses" class="{if condition="substr($currentPath,0,11) == '/my-courses'"}active{/if}" {if condition="substr($currentPath,0,11) == '/my-courses'"}aria-current="page"{/if}>我的课程</a>
+    <a href="/me/profile" class="{if condition="substr($currentPath,0,11) == '/me/profile'"}active{/if}" {if condition="substr($currentPath,0,11) == '/me/profile'"}aria-current="page"{/if}>个人资料</a>
+    <a href="/me/favorites" class="{if condition="substr($currentPath,0,13) == '/me/favorites'"}active{/if}" {if condition="substr($currentPath,0,13) == '/me/favorites'"}aria-current="page"{/if}>我的收藏</a>
+    <a href="/me/history" class="{if condition="substr($currentPath,0,11) == '/me/history'"}active{/if}" {if condition="substr($currentPath,0,11) == '/me/history'"}aria-current="page"{/if}>观看历史</a>
+</nav>

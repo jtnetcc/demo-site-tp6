@@ -1,0 +1,19 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form class="filter" method="get" action="/admin/grants">
+        <select name="user_id" data-current="{$filters.user_id|default=''}"><option value="">全部用户</option>{volist name="users" id="user"}<option value="{$user.id}">{$user.username}</option>{/volist}</select>
+        <select name="course_id" data-current="{$filters.course_id|default=''}"><option value="">全部课程</option>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select>
+        <button type="submit">筛选</button><button type="button" class="secondary" data-modal-target="#grant-create-modal">新增授权</button>
+    </form>
+</section>
+<section class="card">
+    <table class="table">
+        <tr><th>编号</th><th>用户</th><th>课程</th><th>授权管理员</th><th>过期时间</th><th>操作</th></tr>
+        {volist name="grants" id="grant" empty="<tr><td colspan='6'>暂无授权</td></tr>"}
+        <tr><td>{$grant.id}</td><td>{$grant.user.username|default=''}</td><td>{$grant.course.title|default=''}</td><td>{$grant.grantedByAdmin.username|default=''}</td><td>{$grant.expires_at|default='长期'}</td><td class="actions"><button type="button" class="secondary" data-modal-target="#grant-edit-{$grant.id}">编辑</button><form class="inline-form" method="post" action="/admin/grants/{$grant.id}/delete">{include file="admin/partials/csrf" /}<button class="danger" type="submit">删除</button></form></td></tr>
+        <div class="modal" id="grant-edit-{$grant.id}" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">编辑授权</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/grants/{$grant.id}">{include file="admin/partials/csrf" /}<label>用户</label><input value="{$grant.user.username|default=''} / {$grant.user.display_name|default=''}" disabled><label>课程</label><input value="{$grant.course.title|default=''}" disabled><label>过期时间</label><input name="expires_at" value="{$grant.expires_at|default=''}" placeholder="留空表示长期有效"><p class="actions"><button type="submit">保存</button></p></form></div></div></div>
+        {/volist}
+    </table>
+</section>
+<section>{$grants|raw}</section>
+<div class="modal" id="grant-create-modal" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">新增授权</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/grants">{include file="admin/partials/csrf" /}<label>用户</label><select name="user_id" required>{volist name="users" id="user"}<option value="{$user.id}">{$user.username} / {$user.display_name}</option>{/volist}</select><label>课程</label><select name="course_id" required>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select><label>过期时间</label><input name="expires_at" placeholder="留空表示长期有效"><p class="actions"><button type="submit">保存</button></p></form></div></div></div>

@@ -1,0 +1,19 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <table class="table">
+        <tr><th>编号</th><td>{$task.id}</td></tr>
+        <tr><th>来源</th><td>{$task.source_name}</td></tr>
+        <tr><th>来源类型</th><td>{$task.source_type|default='UPLOAD'}</td></tr>
+        <tr><th>网盘链接</th><td>{if condition="$task.source_url"}<a href="{$task.source_url}" target="_blank">{$task.source_url}</a>{/if}</td></tr>
+        <tr><th>提取码</th><td>{$task.source_code|default=''}</td></tr>
+        <tr><th>类型</th><td>{$task.kind}</td></tr>
+        <tr><th>状态</th><td>{$task.status}</td></tr>
+        <tr><th>视频</th><td>{$task.video.title|default=''}</td></tr>
+        <tr><th>课程</th><td>{$task.course.title|default=''}</td></tr>
+        <tr><th>课时</th><td>{$task.lesson.title|default=''}</td></tr>
+        <tr><th>存储路径</th><td>{if condition="$task.storage_key"}<a href="/{$task.storage_key}" target="_blank">{$task.storage_key}</a>{/if}</td></tr>
+        <tr><th>错误信息</th><td>{$task.error_message|default=''}</td></tr>
+        <tr><th>创建时间</th><td>{$task.created_at}</td></tr>
+    </table>
+    <div class="actions">{if condition="$task.source_type == 'NETDISK' && in_array($task.status, ['PENDING','FAILED'])"}<form class="inline-form" method="post" action="/admin/import-tasks/{$task.id}/process">{include file="admin/partials/csrf" /}<button type="submit">执行转存</button></form>{/if}<a class="btn secondary" href="/admin/import-tasks">返回</a></div>
+</section>

@@ -1,0 +1,12 @@
+{layout name="layout/base" /}
+{include file="partials/account_nav" /}
+<section class="section page-head">
+    <div><p class="page-kicker">WATCH HISTORY</p><h1>观看历史</h1><p>回顾最近学习过的视频和观看进度。</p></div>
+    <div class="page-actions"><a class="btn secondary" href="/videos">继续找课</a></div>
+</section>
+<section class="list-card">
+    {volist name="histories" id="item" empty="<div class='empty-state'>暂无观看记录。<p><a class='button' href='/videos'>开始观看</a></p></div>"}
+    <article class="list-item"><div><a href="/videos/{$item.video.id}">{$item.video.title|default='视频已不可用'}</a><p class="muted">观看时间：{$item.watched_at} · 进度：{$item.progress_sec|default=0} 秒</p></div><a class="btn secondary" href="/videos/{$item.video.id}">继续</a></article>
+    {/volist}
+</section>
+<section class="section">{$histories|raw}</section>

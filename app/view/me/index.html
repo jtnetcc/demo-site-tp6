@@ -1,0 +1,31 @@
+{layout name="layout/base" /}
+{include file="partials/account_nav" /}
+<section class="section card">
+    <div class="page-head">
+        <div>
+            <p class="page-kicker">MY LEARNING</p>
+            <h1>{$user.display_name}</h1>
+            <div class="meta"><span class="tag">{$user.level}</span><span class="badge gray">{$user.status}</span><span>{$user.username}</span></div>
+        </div>
+        <div class="page-actions"><a class="button" href="/my-courses">继续学习</a><a class="btn secondary" href="/me/profile">编辑资料</a></div>
+    </div>
+</section>
+<section class="section stat-grid">
+    <a class="stat-card" href="/me/history"><b>历史</b><span class="muted">查看观看记录</span></a>
+    <a class="stat-card" href="/me/favorites"><b>收藏</b><span class="muted">回到收藏视频</span></a>
+    <a class="stat-card" href="/my-courses"><b>课程</b><span class="muted">进入可学课程</span></a>
+</section>
+<section class="section split-layout">
+    <div>
+        <div class="section-title"><h2>最近观看</h2><a href="/me/history">全部</a></div>
+        <div class="list-card">{volist name="history" id="item" empty="<div class='empty-state'>暂无观看记录</div>"}<article class="list-item"><div><a href="/videos/{$item.video.id}">{$item.video.title|default='视频已不可用'}</a><p class="muted">{$item.watched_at}</p></div></article>{/volist}</div>
+    </div>
+    <div>
+        <div class="section-title"><h2>最近收藏</h2><a href="/me/favorites">全部</a></div>
+        <div class="list-card">{volist name="favorites" id="item" empty="<div class='empty-state'>暂无收藏</div>"}<article class="list-item"><div><a href="/videos/{$item.video.id}">{$item.video.title|default='视频已不可用'}</a><p class="muted">{$item.created_at}</p></div></article>{/volist}</div>
+    </div>
+</section>
+<section class="section">
+    <div class="section-title"><h2>有效授权</h2></div>
+    <div class="grid compact">{volist name="grants" id="grant" empty="<div class='empty-state'>暂无课程授权</div>"}<article class="card"><span class="badge">授权访问</span><h3><a href="/course/{$grant.course.id}">{$grant.course.title|default='课程已不可用'}</a></h3><p class="muted">到期：{$grant.expires_at|default='长期有效'}</p></article>{/volist}</div>
+</section>

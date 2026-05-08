@@ -1,0 +1,61 @@
+{layout name="admin/layout" /}
+<style>
+.import-task-table th,.import-task-table td{vertical-align:top}.task-source{display:grid;gap:6px;min-width:240px}.task-source strong{font-size:15px;color:#0f172a}.task-meta{display:flex;gap:6px;flex-wrap:wrap}.task-meta .badge{background:#eef2ff;color:#3730a3}.task-related{display:grid;gap:6px;min-width:220px}.task-related div{display:grid;grid-template-columns:42px 1fr;gap:8px}.task-related b{color:#64748b}.task-storage{display:grid;gap:8px;min-width:320px;max-width:520px}.task-path{display:block;overflow-wrap:anywhere;word-break:break-all;line-height:1.5}.task-error{color:#991b1b;background:#fee2e2;border-radius:10px;padding:8px 10px;line-height:1.45}.task-actions{display:grid;grid-template-columns:1fr;gap:8px;min-width:104px}.task-actions .btn,.task-actions button,.task-actions form{width:100%}@media(max-width:800px){.task-source,.task-related,.task-storage,.task-actions{min-width:180px}.task-storage{max-width:none}}
+</style>
+<section class="card">
+    <form class="filter" method="get" action="/admin/import-tasks">
+        <input name="q" value="{$filters.q|default=''}" placeholder="来源/存储路径/关联标题">
+        <select name="source_type" data-current="{$filters.source_type|default=''}"><option value="">全部来源</option><option value="UPLOAD">本地上传</option><option value="NETDISK">网盘</option></select>
+        <select name="status" data-current="{$filters.status|default=''}"><option value="">全部状态</option><option value="PENDING">待处理</option><option value="PROCESSING">处理中</option><option value="DONE">已完成</option><option value="FAILED">失败</option></select>
+        <select name="kind" data-current="{$filters.kind|default=''}"><option value="">全部类型</option><option value="VIDEO">视频</option><option value="COVER">封面</option></select>
+        <select name="video_id" data-current="{$filters.video_id|default=''}"><option value="">全部视频</option>{volist name="videos" id="video"}<option value="{$video.id}">{$video.title}</option>{/volist}</select>
+        <select name="course_id" data-current="{$filters.course_id|default=''}"><option value="">全部课程</option>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select>
+        <button type="submit">筛选</button>
+        <button type="button" class="secondary" data-modal-target="#import-create-modal">新增导入</button>
+    </form>
+</section>
+<section class="card">
+    <table class="table import-task-table">
+        <tr><th>编号</th><th>来源信息</th><th>关联对象</th><th>存储与错误</th><th>创建时间</th><th>操作</th></tr>
+        {volist name="tasks" id="task" empty="<tr><td colspan='6'>暂无导入任务</td></tr>"}
+        <tr>
+            <td><b>{$task.id}</b></td>
+            <td>
+                <div class="task-source">
+                    <strong>{$task.source_name}</strong>
+                    <div class="task-meta"><span class="badge">{$task.source_type|default='UPLOAD'}</span><span class="badge">{$task.kind}</span><span class="badge">{$task.status}</span></div>
+                    {if condition="$task.source_url"}<a class="task-path" href="{$task.source_url}" target="_blank" rel="noopener noreferrer">{$task.source_url}</a>{/if}
+                    {if condition="$task.source_code"}<span class="muted">提取码：{$task.source_code}</span>{/if}
+                </div>
+            </td>
+            <td>
+                <div class="task-related">
+                    <div><b>视频</b><span>{$task.video.title|default='未关联'}</span></div>
+                    <div><b>课程</b><span>{$task.course.title|default='未关联'}</span></div>
+                    <div><b>课时</b><span>{$task.lesson.title|default='未关联'}</span></div>
+                </div>
+            </td>
+            <td>
+                <div class="task-storage">
+                    {if condition="$task.storage_key"}<a class="task-path" href="/{$task.storage_key}" target="_blank">{$task.storage_key}</a>{else /}<span class="muted">暂无存储路径</span>{/if}
+                    {if condition="$task.error_message"}<div class="task-error">{$task.error_message}</div>{/if}
+                </div>
+            </td>
+            <td>{$task.created_at}</td>
+            <td>
+                <div class="task-actions">
+                    {if condition="$task.source_type == 'NETDISK' && in_array($task.status, ['PENDING','FAILED'])"}<form class="inline-form" method="post" action="/admin/import-tasks/{$task.id}/process">{include file="admin/partials/csrf" /}<button type="submit">执行转存</button></form>{/if}
+                    <button type="button" class="secondary" data-modal-target="#import-edit-{$task.id}">编辑</button>
+                    <a class="btn secondary" href="/admin/import-tasks/{$task.id}">详情</a>
+                    <form class="inline-form" method="post" action="/admin/import-tasks/{$task.id}/delete">{include file="admin/partials/csrf" /}<button class="danger" type="submit">删除</button></form>
+                </div>
+            </td>
+        </tr>
+        {/volist}
+    </table>
+</section>
+<section>{$tasks|raw}</section>
+{volist name="tasks" id="task"}
+<div class="modal modal-lg" id="import-edit-{$task.id}" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">编辑导入任务 #{$task.id}</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/import-tasks/{$task.id}">{include file="admin/partials/csrf" /}<div class="form-grid"><div><label>来源类型</label><select name="source_type" data-current="{$task.source_type|default='UPLOAD'}"><option value="UPLOAD">本地上传</option><option value="NETDISK">百度网盘</option></select></div><div><label>导入类型</label><select name="kind" data-current="{$task.kind}"><option value="VIDEO">视频文件</option><option value="COVER">封面图片</option></select></div><div><label>状态</label><select name="status" data-current="{$task.status}"><option value="PENDING">待处理</option><option value="PROCESSING">处理中</option><option value="DONE">已完成</option><option value="FAILED">失败</option></select></div><div><label>来源名称</label><input name="source_name" value="{$task.source_name}" required></div></div><div class="form-grid"><div><label>来源链接</label><input name="source_url" value="{$task.source_url|default=''}"></div><div><label>提取码</label><input name="source_code" value="{$task.source_code|default=''}"></div><div><label>存储路径</label><input name="storage_key" value="{$task.storage_key|default=''}" placeholder="uploads/videos/demo.mp4"></div></div><label>网盘分享原文</label><textarea name="source_raw_text">{$task.source_raw_text|default=''}</textarea><div class="form-grid"><div><label>关联视频</label><select name="video_id" data-current="{$task.video_id|default=''}"><option value="">不关联视频</option>{volist name="videos" id="video"}<option value="{$video.id}">{$video.title}</option>{/volist}</select></div><div><label>关联课程</label><select name="course_id" data-current="{$task.course_id|default=''}"><option value="">不关联课程</option>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select></div><div><label>关联课时</label><select name="lesson_id" data-current="{$task.lesson_id|default=''}"><option value="">不关联课时</option>{volist name="lessons" id="lesson"}<option value="{$lesson.id}">{$lesson.course.title|default=''} / {$lesson.title}</option>{/volist}</select></div></div><label>错误信息</label><textarea name="error_message">{$task.error_message|default=''}</textarea><p class="actions"><button type="submit">保存修改</button></p></form></div></div></div>
+{/volist}
+<div class="modal modal-lg" id="import-create-modal" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">新增导入任务</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/import-tasks" enctype="multipart/form-data">{include file="admin/partials/csrf" /}<div class="form-grid"><div><label>来源类型</label><select name="source_type"><option value="UPLOAD">本地上传</option><option value="NETDISK">百度网盘</option></select></div><div><label>导入类型</label><select name="kind"><option value="VIDEO">视频文件</option><option value="COVER">封面图片</option></select></div><div><label>来源名称</label><input name="source_name" placeholder="留空使用原始文件名/网盘文件名"></div><div><label>文件（本地上传时必填）</label><input type="file" name="file"></div></div><label>百度网盘分享文本</label><textarea name="baidu_share_text" placeholder="通过网盘分享的文件：[鼠胆英雄][2019][喜剧][中国].mp4&#10;链接: https://pan.baidu.com/s/1J3tLwUBV_PBh6RS0ITXH5g?pwd=ytfi&#10;提取码: ytfi"></textarea><div class="form-grid"><div><label>关联视频</label><select name="video_id"><option value="">不关联视频</option>{volist name="videos" id="video"}<option value="{$video.id}">{$video.title}</option>{/volist}</select></div><div><label>关联课程</label><select name="course_id"><option value="">不关联课程</option>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select></div><div><label>关联课时</label><select name="lesson_id"><option value="">不关联课时</option>{volist name="lessons" id="lesson"}<option value="{$lesson.id}">{$lesson.course.title|default=''} / {$lesson.title}</option>{/volist}</select></div></div><p class="muted">本地上传会立即同步；百度网盘会先创建任务，再用服务端转存到本地，完成后前台走本站签名播放器。</p><p class="actions"><button type="submit">创建导入任务</button></p></form></div></div></div>

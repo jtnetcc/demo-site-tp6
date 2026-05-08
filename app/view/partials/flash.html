@@ -1,0 +1,10 @@
+{if condition="$flashSuccess"}
+<div class="flash ok" role="status">
+    <div><strong>操作成功</strong><span>{$flashSuccess}</span></div>
+</div>
+{/if}
+{if condition="$flashError"}
+<div class="flash err" role="alert">
+    <div><strong>提示</strong><span>{$flashError}</span></div>
+</div>
+{/if}

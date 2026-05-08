@@ -1,0 +1,12 @@
+{layout name="layout/base" /}
+{include file="partials/account_nav" /}
+<section class="section page-head">
+    <div><p class="page-kicker">FAVORITES</p><h1>我的收藏</h1><p>收藏的视频会显示在这里，方便下次继续观看。</p></div>
+    <div class="page-actions"><a class="btn secondary" href="/videos">发现视频</a></div>
+</section>
+<section class="list-card">
+    {volist name="favorites" id="item" empty="<div class='empty-state'>暂无收藏。<p><a class='button' href='/videos'>去发现视频</a></p></div>"}
+    <article class="list-item"><div><a href="/videos/{$item.video.id}">{$item.video.title|default='视频已不可用'}</a><p class="muted">收藏时间：{$item.created_at}</p></div><a class="btn secondary" href="/videos/{$item.video.id}">查看</a></article>
+    {/volist}
+</section>
+<section class="section">{$favorites|raw}</section>

@@ -1,0 +1,19 @@
+<article class="card media-card">
+    <a class="media-card-link" href="/videos/{$video.id}" aria-label="查看视频：{$video.title}">
+        {if condition="$video.cover_url"}
+            <img class="media-cover" src="{$video.cover_url}" alt="{$video.title}">
+        {else /}
+            <div class="media-placeholder">视频课程</div>
+        {/if}
+        <div class="media-body">
+            <h3 class="media-title">{$video.title}</h3>
+            <p class="media-desc">{$video.description|default='暂无简介'}</p>
+            <div class="meta">
+                <span class="tag">{$video.required_level|default='普通'}</span>
+                <span class="muted">播放 {$video.play_count|default=0}</span>
+                {if condition="$video.category"}<span class="badge gray">{$video.category.name}</span>{/if}
+            </div>
+            <div class="media-footer"><span>查看详情</span></div>
+        </div>
+    </a>
+</article>

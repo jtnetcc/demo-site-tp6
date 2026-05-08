@@ -1,0 +1,16 @@
+{layout name="layout/base" /}
+{include file="partials/account_nav" /}
+<section class="section page-head">
+    <div><p class="page-kicker">MY COURSES</p><h1>我的课程</h1><p>这里汇总了你通过会员等级或课程授权可学习的专题。</p></div>
+    <div class="page-actions"><a class="btn secondary" href="/courses">浏览更多课程</a></div>
+</section>
+<section class="grid">
+    {volist name="courses" id="item" empty="<div class='empty-state'>暂无可学习课程，去课程页看看吧。<p><a class='button' href='/courses'>浏览课程</a></p></div>"}
+    <article class="card media-card">
+        <a href="/course/{$item.course.id}">
+            {if condition="$item.course.cover_url"}<img class="media-cover" src="{$item.course.cover_url}" alt="{$item.course.title}">{else /}<div class="media-placeholder">我的课程</div>{/if}
+        </a>
+        <div class="media-body"><span class="tag">{$item.access_type}</span><h3 class="media-title"><a href="/course/{$item.course.id}">{$item.course.title}</a></h3><p class="media-desc">{$item.course.description|default='暂无简介'}</p><div class="media-footer"><a class="button" href="/course/{$item.course.id}">继续学习</a></div></div>
+    </article>
+    {/volist}
+</section>

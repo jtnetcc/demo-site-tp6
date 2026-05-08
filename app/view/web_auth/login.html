@@ -1,0 +1,16 @@
+{layout name="layout/base" /}
+<section class="auth-shell">
+    <div class="auth-aside"><p class="page-kicker">WELCOME BACK</p><h1>继续你的学习进度</h1><p class="muted">登录后可以观看授权内容、收藏视频并查看学习历史。</p></div>
+    <div class="card auth-card">
+        <h1>登录</h1>
+        <form method="post" action="/login">
+            <input type="hidden" name="returnTo" value="{$returnTo|default='/me'}">
+            <label>用户名 / 邮箱 / 手机号</label>
+            <input name="account" required autocomplete="username">
+            <label>密码</label>
+            <input name="password" type="password" required autocomplete="current-password">
+            <div class="section"><button class="button" type="submit">登录</button></div>
+        </form>
+        <p class="muted">还没有账号？<a href="/register">立即注册</a></p>
+    </div>
+</section>

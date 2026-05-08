@@ -1,0 +1,19 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form method="post" action="{$action}" enctype="multipart/form-data">{include file="admin/partials/csrf" /}
+        <div class="form-grid">
+            <div><label>来源类型</label><select name="source_type" data-current="{$defaults.source_type|default='UPLOAD'}"><option value="UPLOAD">本地上传</option><option value="NETDISK">百度网盘</option></select></div>
+            <div><label>导入类型</label><select name="kind" data-current="{$defaults.kind|default='VIDEO'}"><option value="VIDEO">视频文件</option><option value="COVER">封面图片</option></select></div>
+            <div><label>来源名称</label><input name="source_name" value="{$defaults.source_name|default=''}" placeholder="留空使用原始文件名/网盘文件名"></div>
+            <div><label>文件（本地上传时必填）</label><input type="file" name="file"></div>
+        </div>
+        <label>百度网盘分享文本</label><textarea name="baidu_share_text" placeholder="通过网盘分享的文件：[鼠胆英雄][2019][喜剧][中国].mp4&#10;链接: https://pan.baidu.com/s/1J3tLwUBV_PBh6RS0ITXH5g?pwd=ytfi&#10;提取码: ytfi">{$defaults.baidu_share_text|default=''}</textarea>
+        <div class="form-grid">
+            <div><label>关联视频</label><select name="video_id" data-current="{$defaults.video_id|default=''}"><option value="">不关联视频</option>{volist name="videos" id="video"}<option value="{$video.id}">{$video.title}</option>{/volist}</select></div>
+            <div><label>关联课程</label><select name="course_id" data-current="{$defaults.course_id|default=''}"><option value="">不关联课程</option>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select></div>
+            <div><label>关联课时</label><select name="lesson_id" data-current="{$defaults.lesson_id|default=''}"><option value="">不关联课时</option>{volist name="lessons" id="lesson"}<option value="{$lesson.id}">{$lesson.course.title|default=''} / {$lesson.title}</option>{/volist}</select></div>
+        </div>
+        <p class="muted">本地上传会立即同步；百度网盘会先创建任务，再用服务端转存到本地，完成后前台走本站签名播放器。</p>
+        <p class="actions"><button type="submit">创建导入任务</button><a class="btn secondary" href="/admin/import-tasks">返回</a></p>
+    </form>
+</section>

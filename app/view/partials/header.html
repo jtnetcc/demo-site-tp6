@@ -1,0 +1,28 @@
+{if condition="($siteSettings.header.announcementEnabled && $siteSettings.header.announcementText) || $siteSettings.header.contactPhone || $siteSettings.header.contactEmail || $siteSettings.header.socialLinks"}
+<div class="site-topbar"><div class="container">
+    <div class="topbar-announcement">{if condition="$siteSettings.header.announcementEnabled && $siteSettings.header.announcementText"}<span>{$siteSettings.header.announcementText}</span>{/if}</div>
+    <div class="topbar-contact">
+        {if condition="$siteSettings.header.contactPhone"}<span>电话：{$siteSettings.header.contactPhone}</span>{/if}
+        {if condition="$siteSettings.header.contactEmail"}<span>邮箱：{$siteSettings.header.contactEmail}</span>{/if}
+        {volist name="siteSettings.header.socialLinks" id="link"}<a href="{$link.url}" target="_blank" rel="noopener noreferrer">{$link.label}</a>{/volist}
+    </div>
+</div></div>
+{/if}
+<header class="site-header">
+    <div class="container nav">
+        <a class="brand" href="/">{if condition="$siteSettings.base_info.logoUrl"}<img src="{$siteSettings.base_info.logoUrl}" alt="{$siteName|default='在线学习'}" style="width:30px;height:30px;border-radius:10px;object-fit:cover">{else /}<span class="brand-mark"></span>{/if}<span>{$siteName|default='在线学习'}</span></a>
+        <nav class="links" aria-label="主导航">
+            <a href="/videos" class="{if condition="substr($currentPath,0,7) == '/videos'"}active{/if}" {if condition="substr($currentPath,0,7) == '/videos'"}aria-current="page"{/if}>视频</a>
+            <a href="/courses" class="{if condition="substr($currentPath,0,8) == '/courses' || substr($currentPath,0,8) == '/course/'"}active{/if}" {if condition="substr($currentPath,0,8) == '/courses' || substr($currentPath,0,8) == '/course/'"}aria-current="page"{/if}>课程</a>
+            <a href="/search" class="{if condition="substr($currentPath,0,7) == '/search'"}active{/if}" {if condition="substr($currentPath,0,7) == '/search'"}aria-current="page"{/if}>搜索</a>
+            {if condition="$currentUser"}
+                <a class="nav-user {if condition="substr($currentPath,0,3) == '/me' || substr($currentPath,0,11) == '/my-courses'"}active{/if}" href="/me" {if condition="substr($currentPath,0,3) == '/me' || substr($currentPath,0,11) == '/my-courses'"}aria-current="page"{/if}>{$currentUser.display_name|default=$currentUser.username}</a>
+                <form method="post" action="/logout"><input type="hidden" name="_csrf" value="{$webCsrfToken|default=''}"><button class="link-button" type="submit">退出</button></form>
+            {else /}
+                <a href="/login" class="{if condition="substr($currentPath,0,6) == '/login'"}active{/if}" {if condition="substr($currentPath,0,6) == '/login'"}aria-current="page"{/if}>登录</a>
+                <a class="button {if condition="substr($currentPath,0,9) == '/register'"}active{/if}" href="/register" {if condition="substr($currentPath,0,9) == '/register'"}aria-current="page"{/if}>注册</a>
+            {/if}
+        </nav>
+    </div>
+    {if condition="$siteSettings.header.customHtml"}<div class="site-header-custom"><div class="container">{$siteSettings.header.customHtml|raw}</div></div>{/if}
+</header>

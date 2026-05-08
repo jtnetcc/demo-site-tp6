@@ -1,0 +1,16 @@
+{layout name="admin/layout" /}
+<section class="grid">
+    <div class="card"><div class="muted">用户</div><div class="stat">{$stats.users}</div></div>
+    <div class="card"><div class="muted">视频</div><div class="stat">{$stats.videos}</div></div>
+    <div class="card"><div class="muted">课程</div><div class="stat">{$stats.courses}</div></div>
+    <div class="card"><div class="muted">课时</div><div class="stat">{$stats.lessons}</div></div>
+    <div class="card"><div class="muted">评论</div><div class="stat">{$stats.comments}</div></div>
+    <div class="card"><div class="muted">授权</div><div class="stat">{$stats.grants}</div></div>
+    <div class="card"><div class="muted">观看记录</div><div class="stat">{$stats.watchHistories}</div></div>
+</section>
+<section class="grid">
+    <div class="card"><h2>最近用户</h2><table class="table"><tr><th>编号</th><th>用户名</th><th>角色</th></tr>{volist name="recentUsers" id="user" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$user.id}</td><td>{$user.username}</td><td>{$user.role}</td></tr>{/volist}</table></div>
+    <div class="card"><h2>最近视频</h2><table class="table"><tr><th>编号</th><th>标题</th><th>状态</th></tr>{volist name="recentVideos" id="video" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$video.id}</td><td>{$video.title}</td><td>{$video.status}</td></tr>{/volist}</table></div>
+    <div class="card"><h2>最近课程</h2><table class="table"><tr><th>编号</th><th>标题</th><th>状态</th></tr>{volist name="recentCourses" id="course" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$course.id}</td><td>{$course.title}</td><td>{$course.status}</td></tr>{/volist}</table></div>
+    <div class="card"><h2>最近授权</h2><table class="table"><tr><th>编号</th><th>用户</th><th>课程</th></tr>{volist name="recentGrants" id="grant" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$grant.id}</td><td>{$grant.user.username|default=''}</td><td>{$grant.course.title|default=''}</td></tr>{/volist}</table></div>
+</section>

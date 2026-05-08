@@ -1,0 +1,23 @@
+{layout name="layout/base" /}
+<section class="section page-head">
+    <div>
+        <p class="page-kicker">COURSE TOPICS</p>
+        <h1>课程专题</h1>
+        <p>按课程主题和会员等级筛选，系统完成一个学习专题。</p>
+    </div>
+</section>
+<section class="filter-card">
+    <form class="filter-grid course" method="get" action="/courses">
+        <div><label>关键词</label><input name="q" value="{$filters.q|default=''}" placeholder="搜索课程标题或简介"></div>
+        <div><label>等级</label><select name="level" data-current="{$filters.level|default=''}"><option value="">全部等级</option><option value="NORMAL">普通</option><option value="VIP">会员</option><option value="SVIP">超级会员</option></select></div>
+        <button class="button" type="submit">筛选</button>
+        <a class="btn secondary" href="/courses">清除</a>
+    </form>
+</section>
+<section class="grid">
+    {volist name="courses" id="course" empty="<div class='empty-state'>没有找到匹配课程，试试调整筛选条件。</div>"}{include file="partials/course_card" /}{/volist}
+</section>
+<section class="section">{$courses|raw}</section>
+<script>
+document.querySelectorAll('select[data-current]').forEach(function(select){select.value=select.dataset.current||'';});
+</script>

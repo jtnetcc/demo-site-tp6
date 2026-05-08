@@ -1,0 +1,14 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form method="post" action="{$action}">{include file="admin/partials/csrf" /}
+        {if condition="$grant"}
+        <label>用户</label><input value="{$grant.user.username|default=''} / {$grant.user.display_name|default=''}" disabled>
+        <label>课程</label><input value="{$grant.course.title|default=''}" disabled>
+        {else /}
+        <label>用户</label><select name="user_id" data-current="{$grant.user_id|default=''}" required>{volist name="users" id="user"}<option value="{$user.id}">{$user.username} / {$user.display_name}</option>{/volist}</select>
+        <label>课程</label><select name="course_id" data-current="{$grant.course_id|default=''}" required>{volist name="courses" id="course"}<option value="{$course.id}">{$course.title}</option>{/volist}</select>
+        {/if}
+        <label>过期时间</label><input name="expires_at" value="{$grant.expires_at|default=''}" placeholder="留空表示长期有效">
+        <p class="actions"><button type="submit">保存</button><a class="btn secondary" href="/admin/grants">返回</a></p>
+    </form>
+</section>

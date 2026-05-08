@@ -1,0 +1,151 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form id="adminVideoForm" method="post" action="{$action}" enctype="multipart/form-data">{include file="admin/partials/csrf" /}
+        <h2>基础信息</h2>
+        <div class="form-grid">
+            <div><label>标题</label><input name="title" value="{$video.title|default=''}" required></div>
+            <div><label>分类</label><select name="category_id" data-current="{$video.category_id|default=''}" required><option value="">请选择分类</option>{volist name="categories" id="category"}<option value="{$category.id}">{$category.name}</option>{/volist}</select></div>
+            <div><label>所需等级</label><select name="required_level" data-current="{$video.required_level|default='NORMAL'}"><option value="NORMAL">普通</option><option value="VIP">会员</option><option value="SVIP">超级会员</option></select></div>
+            <div><label>状态</label><select name="status" data-current="{$video.status|default='DRAFT'}"><option value="DRAFT">草稿</option><option value="PUBLISHED">已发布</option><option value="OFFLINE">已下线</option></select></div>
+        </div>
+        <label>简介</label><textarea name="description" required>{$video.description|default=''}</textarea>
+
+        <h2>封面（任选一种）</h2>
+        <div class="form-grid">
+            <div><label>本地封面上传</label><input type="file" name="cover_file" accept="image/*"></div>
+            <div><label>封面链接（HTTP / 网盘 / 本地路径）</label><input name="cover_url" value="{$video.cover_url|default=''}" placeholder="https://cdn.example.com/cover.jpg 或 /uploads/covers/demo.jpg"></div>
+        </div>
+        <p class="muted">本地上传和封面链接任选一种；上传本地封面会自动覆盖封面链接，编辑时不上传也不改链接则保留原封面。</p>
+
+        <h2>视频资源（任选一种）</h2>
+        <div class="form-grid">
+            <div><label>本地视频上传</label><input type="file" name="video_file" accept="video/*,.mkv,.avi,.flv,.ogv"></div>
+            <div><label>视频地址（本地路径 / HTTP 直链）</label><input name="object_key" value="{$asset.object_key|default=''}" placeholder="uploads/videos/demo.mp4 或 https://cdn.example.com/demo.mp4"></div>
+        </div>
+        <label>网盘分享文本 / 链接</label><textarea name="baidu_share_text" placeholder="通过网盘分享的文件：[鼠胆英雄][2019][喜剧][中国].mp4&#10;链接: https://pan.baidu.com/s/1J3tLwUBV_PBh6RS0ITXH5g?pwd=ytfi&#10;提取码: ytfi">{$asset.share_raw_text|default=''}</textarea>
+        <p class="muted">本地上传、视频地址、网盘分享文本任选一种；本地上传会自动获取文件名、类型、大小和时长，HTTP/网盘资源会尽量自动识别，识别不到可在下方手动填写。</p>
+
+        <h2>资源元数据</h2>
+        <div class="form-grid">
+            <div><label>原始文件名</label><input name="original_name" value="{$asset.original_name|default=''}" placeholder="自动获取，可手动修正"></div>
+            <div><label>媒体类型</label><input name="mime_type" value="{$asset.mime_type|default='video/mp4'}" placeholder="video/mp4"></div>
+            <div><label>文件大小字节</label><input type="number" name="size_bytes" value="{$asset.size_bytes|default=0}" min="0"></div>
+            <div><label>时长秒数</label><input type="number" name="duration_sec" value="{$asset.duration_sec|default=0}" min="0"></div>
+        </div>
+
+        <h2>标签与评论</h2>
+        <div data-selected-tags="{$selectedTagIdsString}"></div>
+        <div class="checkboxes">{volist name="tags" id="tag"}<label class="check"><input type="checkbox" name="tag_ids[]" value="{$tag.id}"> {$tag.name}</label>{/volist}</div>
+        <label>自定义标签</label><input name="custom_tags" placeholder="多个标签用逗号或换行分隔">
+        <label class="check"><input type="checkbox" name="allow_comments" value="1" {if condition="!$video || $video.allow_comments"}checked{/if}> 开启评论</label>
+
+        <div id="videoUploadProgress" class="upload-progress" aria-live="polite" style="display:none">
+            <div class="upload-progress-head"><strong id="uploadProgressTitle">准备上传…</strong><span id="uploadProgressPercent">0%</span></div>
+            <div class="upload-progress-track"><div id="uploadProgressBar" class="upload-progress-bar"></div></div>
+            <p id="uploadProgressText" class="muted">正在准备上传文件，请勿关闭页面。</p>
+        </div>
+        <p class="actions"><button id="videoSubmitButton" type="submit">保存并发布</button><a class="btn secondary" href="/admin/videos">返回</a></p>
+    </form>
+</section>
+<style>
+.upload-progress{margin:16px 0;padding:14px;border:1px solid #bfdbfe;border-radius:14px;background:linear-gradient(180deg,#eff6ff,#fff)}
+.upload-progress-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;color:#1e3a8a}
+.upload-progress-track{height:12px;border-radius:999px;background:#dbeafe;overflow:hidden}
+.upload-progress-bar{width:0;height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#7c3aed);transition:width .18s ease}
+.upload-progress.success{border-color:#86efac;background:linear-gradient(180deg,#f0fdf4,#fff)}
+.upload-progress.success .upload-progress-head{color:#166534}
+.upload-progress.success .upload-progress-bar{background:linear-gradient(90deg,#16a34a,#22c55e)}
+.upload-progress.error{border-color:#fecaca;background:linear-gradient(180deg,#fef2f2,#fff)}
+.upload-progress.error .upload-progress-head{color:#991b1b}
+.upload-progress.error .upload-progress-bar{background:linear-gradient(90deg,#dc2626,#f97316)}
+</style>
+<script>
+{literal}
+(function(){
+    var form=document.getElementById('adminVideoForm');
+    if(!form){return;}
+    var wrap=document.getElementById('videoUploadProgress');
+    var title=document.getElementById('uploadProgressTitle');
+    var percent=document.getElementById('uploadProgressPercent');
+    var bar=document.getElementById('uploadProgressBar');
+    var text=document.getElementById('uploadProgressText');
+    var button=document.getElementById('videoSubmitButton');
+    function setProgress(value,message,state){
+        value=Math.max(0,Math.min(100,value||0));
+        wrap.style.display='block';
+        wrap.classList.remove('success','error');
+        if(state){wrap.classList.add(state);}
+        percent.textContent=Math.round(value)+'%';
+        bar.style.width=value+'%';
+        if(message){text.textContent=message;}
+    }
+    function pageMessage(html,selector){
+        try{
+            var doc=new DOMParser().parseFromString(html,'text/html');
+            var el=doc.querySelector(selector);
+            return el?el.textContent.trim():'';
+        }catch(e){return '';}
+    }
+    function formatFileSize(size){
+        if(!size){return '0 B';}
+        var units=['B','KB','MB','GB'];
+        var index=0;
+        while(size>=1024&&index<units.length-1){size=size/1024;index++;}
+        return (index===0?size:size.toFixed(1))+' '+units[index];
+    }
+    var videoInput=form.querySelector('input[name="video_file"]');
+    if(videoInput){
+        videoInput.addEventListener('change',function(){
+            var file=videoInput.files&&videoInput.files[0];
+            if(!file){return;}
+            title.textContent='视频已选择，等待上传';
+            setProgress(0,'已选择：'+file.name+'（'+formatFileSize(file.size||0)+'）。点击“保存并发布”开始上传。');
+        });
+    }
+    form.addEventListener('submit',function(event){
+        if(!window.XMLHttpRequest||form.dataset.uploading==='1'){
+            return;
+        }
+        event.preventDefault();
+        var statusSelect=form.querySelector('select[name="status"]');
+        if(statusSelect){statusSelect.value='PUBLISHED';}
+        form.dataset.uploading='1';
+        if(button){button.disabled=true;button.textContent='正在上传并发布…';}
+        setProgress(0,'正在准备上传文件，请勿关闭页面。');
+        title.textContent='正在上传视频资源';
+        var xhr=new XMLHttpRequest();
+        xhr.open((form.method||'POST').toUpperCase(),form.action,true);
+        xhr.setRequestHeader('X-Requested-With','XMLHttpRequest');
+        if(window.adminCsrfToken){xhr.setRequestHeader('X-CSRF-Token',window.adminCsrfToken);}
+        xhr.upload.onprogress=function(event){
+            if(event.lengthComputable){
+                var value=Math.round((event.loaded/event.total)*100);
+                setProgress(value,value>=100?'上传完成，服务器正在保存并发布…':'已上传 '+value+'%，服务器正在接收文件。');
+            }else{
+                setProgress(10,'正在上传，文件较大时请耐心等待。');
+            }
+        };
+        xhr.onload=function(){
+            var error=pageMessage(xhr.responseText,'.flash.err');
+            if(xhr.status>=400||error){
+                title.textContent='保存失败';
+                setProgress(100,error||'上传失败，请检查表单内容后重试。','error');
+                form.dataset.uploading='0';
+                if(button){button.disabled=false;button.textContent='保存并发布';}
+                return;
+            }
+            title.textContent='上传完成';
+            setProgress(100,'视频资源已上传并发布，正在返回列表…','success');
+            setTimeout(function(){window.location.href='/admin/videos';},700);
+        };
+        xhr.onerror=function(){
+            title.textContent='上传失败';
+            setProgress(100,'网络异常或服务器连接中断，请稍后重试。','error');
+            form.dataset.uploading='0';
+            if(button){button.disabled=false;button.textContent='保存并发布';}
+        };
+        xhr.send(new FormData(form));
+    });
+})();
+{/literal}
+</script>

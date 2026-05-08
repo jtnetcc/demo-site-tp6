@@ -1,0 +1,17 @@
+<article class="card media-card">
+    <a href="/course/{$course.id}" aria-label="查看课程：{$course.title}">
+        {if condition="$course.cover_url"}
+            <img class="media-cover" src="{$course.cover_url}" alt="{$course.title}">
+        {else /}
+            <div class="media-placeholder">专题课程</div>
+        {/if}
+    </a>
+    <div class="media-body">
+        <h3 class="media-title"><a href="/course/{$course.id}">{$course.title}</a></h3>
+        <p class="media-desc">{$course.description|default='暂无简介'}</p>
+        <div class="meta"><span class="tag">{$course.required_level|default='公开'}</span></div>
+        <div class="media-footer">
+            <a class="btn secondary" href="/course/{$course.id}">开始学习</a>
+        </div>
+    </div>
+</article>

@@ -1,0 +1,2 @@
+{layout name="admin/layout" /}
+<section class="card"><form method="post" action="{$action}">{include file="admin/partials/csrf" /}<label>名称</label><input name="name" value="{$tag.name|default=''}" required><label>Slug</label><input name="slug" value="{$tag.slug|default=''}" required><p class="actions"><button type="submit">保存</button><a class="btn secondary" href="/admin/tags">返回</a></p></form></section>

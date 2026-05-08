@@ -1,0 +1,27 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form class="filter" method="get" action="/admin/tags">
+        <input name="q" value="{$filters.q|default=''}" placeholder="标签名称/slug">
+        <button type="submit">筛选</button>
+        <button type="button" class="secondary" data-modal-target="#tag-create-modal">新增标签</button>
+    </form>
+</section>
+<section class="card">
+    <table class="table">
+        <tr><th>编号</th><th>名称</th><th>Slug</th><th>操作</th></tr>
+        {volist name="tags" id="tag" empty="<tr><td colspan='4'>暂无标签</td></tr>"}
+        <tr>
+            <td>{$tag.id}</td>
+            <td>{$tag.name}</td>
+            <td>{$tag.slug}</td>
+            <td class="actions">
+                <button type="button" class="secondary" data-modal-target="#tag-edit-{$tag.id}">编辑</button>
+                <form class="inline-form" method="post" action="/admin/tags/{$tag.id}/delete">{include file="admin/partials/csrf" /}<button class="danger" type="submit">删除</button></form>
+            </td>
+        </tr>
+        <div class="modal" id="tag-edit-{$tag.id}" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">编辑标签</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/tags/{$tag.id}">{include file="admin/partials/csrf" /}<label>名称</label><input name="name" value="{$tag.name}" required><label>Slug</label><input name="slug" value="{$tag.slug}" required><p class="actions"><button type="submit">保存</button></p></form></div></div></div>
+        {/volist}
+    </table>
+</section>
+<section>{$tags|raw}</section>
+<div class="modal" id="tag-create-modal" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">新增标签</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/tags">{include file="admin/partials/csrf" /}<label>名称</label><input name="name" required><label>Slug</label><input name="slug" required><p class="actions"><button type="submit">保存</button></p></form></div></div></div>

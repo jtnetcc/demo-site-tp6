@@ -1,0 +1,26 @@
+{layout name="layout/base" /}
+<section class="section page-head">
+    <div>
+        <p class="page-kicker">VIDEO LIBRARY</p>
+        <h1>视频列表</h1>
+        <p>按关键词、分类、会员等级和热度筛选适合你的学习视频。</p>
+    </div>
+    <div class="page-actions"><a class="btn secondary" href="/videos?sort=popular">热门排序</a></div>
+</section>
+<section class="filter-card">
+    <form class="filter-grid" method="get" action="/videos">
+        <div><label>关键词</label><input name="q" value="{$filters.q|default=''}" placeholder="搜索视频标题或简介"></div>
+        <div><label>分类</label><select name="category_id" data-current="{$filters.category_id|default=''}"><option value="">全部分类</option>{volist name="categories" id="category"}<option value="{$category.id}">{$category.name}</option>{/volist}</select></div>
+        <div><label>等级</label><select name="level" data-current="{$filters.level|default=''}"><option value="">全部等级</option><option value="NORMAL">普通</option><option value="VIP">会员</option><option value="SVIP">超级会员</option></select></div>
+        <div><label>排序</label><select name="sort" data-current="{$filters.sort|default=''}"><option value="">最新发布</option><option value="popular">播放最多</option></select></div>
+        <button class="button" type="submit">筛选</button>
+        <a class="btn secondary" href="/videos">清除</a>
+    </form>
+</section>
+<section class="grid">
+    {volist name="videos" id="video" empty="<div class='empty-state'>没有找到匹配视频，试试调整筛选条件。</div>"}{include file="partials/video_card" /}{/volist}
+</section>
+<section class="section">{$videos|raw}</section>
+<script>
+document.querySelectorAll('select[data-current]').forEach(function(select){select.value=select.dataset.current||'';});
+</script>

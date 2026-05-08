@@ -1,0 +1,155 @@
+{layout name="admin/layout" /}
+<section class="card" data-tabs>
+    <form method="post" action="/admin/settings">{include file="admin/partials/csrf" /}
+        <div class="tabs">
+            <button class="tab-btn active" data-tab-target="#settings-base" type="button">基础信息</button>
+            <button class="tab-btn" data-tab-target="#settings-header" type="button">头部</button>
+            <button class="tab-btn" data-tab-target="#settings-footer" type="button">底部</button>
+            <button class="tab-btn" data-tab-target="#settings-seo" type="button">SEO</button>
+            <button class="tab-btn" data-tab-target="#settings-storage" type="button">存储</button>
+            <button class="tab-btn" data-tab-target="#settings-other" type="button">其他</button>
+            <button class="tab-btn" data-tab-target="#settings-json" type="button">高级 JSON</button>
+        </div>
+
+        <div class="tab-panel active" id="settings-base">
+            <h2>基础信息</h2>
+            <div class="form-grid">
+                <div><label>站点名</label><input name="base_info[siteName]" value="{$form.base_info.siteName|default=''}"></div>
+                <div><label>副标题</label><input name="base_info[siteSubtitle]" value="{$form.base_info.siteSubtitle|default=''}"></div>
+                <div><label>站点地址</label><input name="base_info[siteUrl]" value="{$form.base_info.siteUrl|default=''}"></div>
+                <div><label>备案号</label><input name="base_info[recordNumber]" value="{$form.base_info.recordNumber|default=''}"></div>
+                <div><label>联系电话</label><input name="base_info[contactPhone]" value="{$form.base_info.contactPhone|default=''}"></div>
+                <div><label>联系邮箱</label><input name="base_info[contactEmail]" value="{$form.base_info.contactEmail|default=''}"></div>
+                <div><label>标志路径</label><input name="base_info[logoObjectKey]" value="{$form.base_info.logoObjectKey|default=''}"></div>
+                <div><label>网站图标路径</label><input name="base_info[faviconObjectKey]" value="{$form.base_info.faviconObjectKey|default=''}"></div>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="settings-header">
+            <h2>头部</h2>
+            <label class="check"><input type="checkbox" name="header[announcementEnabled]" value="1" {if condition="$form.header.announcementEnabled"}checked{/if}> 开启公告</label>
+            <label>公告内容</label><textarea name="header[announcementText]">{$form.header.announcementText|default=''}</textarea>
+            <div class="form-grid"><div><label>头部联系电话</label><input name="header[contactPhone]" value="{$form.header.contactPhone|default=''}"></div><div><label>头部联系邮箱</label><input name="header[contactEmail]" value="{$form.header.contactEmail|default=''}"></div></div>
+            <h3>社交链接</h3>{volist name="form.header.socialLinkSlots" id="link"}<div class="form-grid"><div><label>名称</label><input name="header[socialLinks][label][]" value="{$link.label|default=''}"></div><div><label>链接</label><input name="header[socialLinks][url][]" value="{$link.url|default=''}"></div></div>{/volist}
+            <label>头部自定义 HTML</label><textarea name="header[customHtml]">{$form.header.customHtml|default=''}</textarea>
+        </div>
+
+        <div class="tab-panel" id="settings-footer">
+            <h2>底部</h2>
+            <label>版权文字</label><input name="footer[copyrightText]" value="{$form.footer.copyrightText|default=''}">
+            <h3>页脚链接</h3>{volist name="form.footer.menuLinkSlots" id="link"}<div class="form-grid"><div><label>名称</label><input name="footer[menuLinks][label][]" value="{$link.label|default=''}"></div><div><label>链接</label><input name="footer[menuLinks][url][]" value="{$link.url|default=''}"></div></div>{/volist}
+            <label>技术支持</label><input name="footer[techSupportText]" value="{$form.footer.techSupportText|default=''}">
+            <label>底部自定义 HTML</label><textarea name="footer[customHtml]">{$form.footer.customHtml|default=''}</textarea>
+        </div>
+
+        <div class="tab-panel" id="settings-seo">
+            <h2>SEO</h2>
+            <div class="form-grid"><div><label>首页标题</label><input name="seo[homeTitle]" value="{$form.seo.homeTitle|default=''}"></div><div><label>社交分享图</label><input name="seo[ogImageObjectKey]" value="{$form.seo.ogImageObjectKey|default=''}"></div><div><label>分享图</label><input name="seo[shareImageObjectKey]" value="{$form.seo.shareImageObjectKey|default=''}"></div></div>
+            <label>关键词</label><input name="seo[homeKeywords]" value="{$form.seo.homeKeywordsText|default=''}" placeholder="用逗号或换行分隔">
+            <label>首页描述</label><textarea name="seo[homeDescription]">{$form.seo.homeDescription|default=''}</textarea>
+            <label>统计代码</label><textarea name="seo[analyticsHtml]">{$form.seo.analyticsHtml|default=''}</textarea>
+        </div>
+
+        <div class="tab-panel" id="settings-storage">
+            <h2>存储</h2>
+            <p class="muted">默认本地存储；视频资源可填写本地相对路径、HTTP 直链或可播放的网盘链接。</p>
+            <div class="form-grid">
+                <div><label>存储方式</label><select name="storage[driver]" data-current="{$form.storage.driver|default='local'}"><option value="local">本地存储</option><option value="netdisk">网盘链接</option></select></div>
+                <div><label>上传目录</label><input name="storage[uploadPath]" value="{$form.storage.uploadPath|default='public/uploads'}" placeholder="public/uploads 或 uploads"></div>
+                <div><label>公开访问前缀</label><input name="storage[publicBaseUrl]" value="{$form.storage.publicBaseUrl|default=''}" placeholder="https://cdn.example.com 或留空"></div>
+            </div>
+            <h3>网盘链接格式</h3>
+            <input name="storage[netdiskLinkFormat]" value="{$form.storage.netdiskLinkFormat|default=''}" placeholder="https://网盘域名/分享路径?pwd=提取码">
+            <h3>百度网盘解析</h3>
+            <p class="muted">未配置解析接口时，百度分享会自动回退为签名后打开网盘页面；配置后可尝试解析为浏览器可直接播放的临时直链。</p>
+            <label class="check"><input type="checkbox" name="netdisk[baidu][enabled]" value="1" {if condition="$form.netdisk.baidu.enabled"}checked{/if}> 启用百度网盘直链解析</label>
+            <label class="check"><input type="checkbox" name="netdisk[baidu][externalFallback]" value="1" {if condition="$form.netdisk.baidu.externalFallback"}checked{/if}> 解析失败时允许回退到网盘页面</label>
+            <div class="form-grid">
+                <div><label>解析模式</label><select name="netdisk[baidu][mode]" data-current="{$form.netdisk.baidu.mode|default='direct-or-external'}"><option value="direct-or-external">能直链则站内播放，否则回退</option><option value="external-only">只打开网盘页面</option></select></div>
+                <div><label>直链有效期秒</label><input type="number" name="netdisk[baidu][directUrlTtlSec]" value="{$form.netdisk.baidu.directUrlTtlSec|default=900}"></div>
+                <div><label>解析接口地址</label><input name="netdisk[baidu][resolverEndpoint]" value="{$form.netdisk.baidu.resolverEndpoint|default=''}" placeholder="https://resolver.example.com/baidu"></div>
+                <div><label>Access Token</label><input name="netdisk[baidu][accessToken]" value="{$form.netdisk.baidu.accessToken|default=''}" type="password"></div>
+            </div>
+            <label>Cookie / 凭据</label><textarea name="netdisk[baidu][cookie]" placeholder="如需解析服务使用百度凭据，可填在这里；不会返回给前端。">{$form.netdisk.baidu.cookie|default=''}</textarea>
+        </div>
+
+        <div class="tab-panel" id="settings-other">
+            <h2>其他</h2>
+            <label class="check"><input type="checkbox" name="other[maintenanceEnabled]" value="1" {if condition="$form.other.maintenanceEnabled"}checked{/if}> 开启维护模式</label>
+            <label>维护公告</label><textarea name="other[maintenanceNotice]">{$form.other.maintenanceNotice|default=''}</textarea>
+            <div class="form-grid"><div><label>默认语言</label><input name="other[defaultLanguage]" value="{$form.other.defaultLanguage|default='zh-CN'}"></div><div><label>时区</label><input name="other[timezone]" value="{$form.other.timezone|default='Asia/Shanghai'}"></div></div>
+            <h2>首页内容</h2>
+            <p class="muted">配置首页首屏标题、按钮和三张说明卡片。</p>
+            <div class="form-grid">
+                <div><label>首页小标题</label><input name="other[homepage][hero][kicker]" value="{$form.homepage.hero.kicker|default=''}"></div>
+                <div><label>首页主标题</label><input name="other[homepage][hero][title]" value="{$form.homepage.hero.title|default=''}"></div>
+            </div>
+            <label>首页描述</label><textarea name="other[homepage][hero][description]">{$form.homepage.hero.description|default=''}</textarea>
+            <h3>首页按钮</h3>
+            <div class="form-grid">
+                <div><label>主按钮文字</label><input name="other[homepage][hero][primaryButtonText]" value="{$form.homepage.hero.primaryButtonText|default=''}"></div>
+                <div><label>主按钮链接</label><input name="other[homepage][hero][primaryButtonUrl]" value="{$form.homepage.hero.primaryButtonUrl|default=''}"></div>
+                <div><label>次按钮文字</label><input name="other[homepage][hero][secondaryButtonText]" value="{$form.homepage.hero.secondaryButtonText|default=''}"></div>
+                <div><label>次按钮链接</label><input name="other[homepage][hero][secondaryButtonUrl]" value="{$form.homepage.hero.secondaryButtonUrl|default=''}"></div>
+                <div><label>登录用户按钮文字</label><input name="other[homepage][hero][userButtonText]" value="{$form.homepage.hero.userButtonText|default=''}"></div>
+                <div><label>登录用户按钮链接</label><input name="other[homepage][hero][userButtonUrl]" value="{$form.homepage.hero.userButtonUrl|default=''}"></div>
+                <div><label>游客按钮文字</label><input name="other[homepage][hero][guestButtonText]" value="{$form.homepage.hero.guestButtonText|default=''}"></div>
+                <div><label>游客按钮链接</label><input name="other[homepage][hero][guestButtonUrl]" value="{$form.homepage.hero.guestButtonUrl|default=''}"></div>
+            </div>
+            <h3>首页说明卡片</h3>
+            <div class="card" style="margin:12px 0;box-shadow:none">
+                <h4>卡片 1</h4>
+                <div class="form-grid">
+                    <div><label>标签</label><input name="other[homepage][featureCards][0][badge]" value="{$form.homepage.featureCards.0.badge|default=''}"></div>
+                    <div><label>标题</label><input name="other[homepage][featureCards][0][title]" value="{$form.homepage.featureCards.0.title|default=''}"></div>
+                </div>
+                <label>描述</label><textarea name="other[homepage][featureCards][0][description]">{$form.homepage.featureCards.0.description|default=''}</textarea>
+            </div>
+            <div class="card" style="margin:12px 0;box-shadow:none">
+                <h4>卡片 2</h4>
+                <div class="form-grid">
+                    <div><label>标签</label><input name="other[homepage][featureCards][1][badge]" value="{$form.homepage.featureCards.1.badge|default=''}"></div>
+                    <div><label>标题</label><input name="other[homepage][featureCards][1][title]" value="{$form.homepage.featureCards.1.title|default=''}"></div>
+                </div>
+                <label>描述</label><textarea name="other[homepage][featureCards][1][description]">{$form.homepage.featureCards.1.description|default=''}</textarea>
+            </div>
+            <div class="card" style="margin:12px 0;box-shadow:none">
+                <h4>卡片 3</h4>
+                <div class="form-grid">
+                    <div><label>标签</label><input name="other[homepage][featureCards][2][badge]" value="{$form.homepage.featureCards.2.badge|default=''}"></div>
+                    <div><label>标题</label><input name="other[homepage][featureCards][2][title]" value="{$form.homepage.featureCards.2.title|default=''}"></div>
+                </div>
+                <label>描述</label><textarea name="other[homepage][featureCards][2][description]">{$form.homepage.featureCards.2.description|default=''}</textarea>
+            </div>
+            <div class="card" style="margin:12px 0;box-shadow:none">
+                <h4>卡片 4</h4>
+                <div class="form-grid">
+                    <div><label>标签</label><input name="other[homepage][featureCards][3][badge]" value="{$form.homepage.featureCards.3.badge|default=''}"></div>
+                    <div><label>标题</label><input name="other[homepage][featureCards][3][title]" value="{$form.homepage.featureCards.3.title|default=''}"></div>
+                </div>
+                <label>描述</label><textarea name="other[homepage][featureCards][3][description]">{$form.homepage.featureCards.3.description|default=''}</textarea>
+            </div>
+            <div class="card" style="margin:12px 0;box-shadow:none">
+                <h4>卡片 5</h4>
+                <div class="form-grid">
+                    <div><label>标签</label><input name="other[homepage][featureCards][4][badge]" value="{$form.homepage.featureCards.4.badge|default=''}"></div>
+                    <div><label>标题</label><input name="other[homepage][featureCards][4][title]" value="{$form.homepage.featureCards.4.title|default=''}"></div>
+                </div>
+                <label>描述</label><textarea name="other[homepage][featureCards][4][description]">{$form.homepage.featureCards.4.description|default=''}</textarea>
+            </div>
+        </div>
+
+        <div class="tab-panel" id="settings-json">
+            <h2>高级 JSON</h2>
+            <p class="muted">默认按上方表单保存；只有勾选下方开关时，才会用这里的 JSON 覆盖对应分区。</p>
+            <label class="check"><input type="checkbox" name="apply_advanced_json" value="1"> 使用高级 JSON 覆盖保存</label>
+            <label>base_info</label><textarea name="advanced_json[base_info]">{$json.base_info|default=''}</textarea>
+            <label>header</label><textarea name="advanced_json[header]">{$json.header|default=''}</textarea>
+            <label>footer</label><textarea name="advanced_json[footer]">{$json.footer|default=''}</textarea>
+            <label>seo</label><textarea name="advanced_json[seo]">{$json.seo|default=''}</textarea>
+            <label>other（含 storage 存储配置）</label><textarea name="advanced_json[other]">{$json.other|default=''}</textarea>
+        </div>
+
+        <p class="actions"><button type="submit">保存设置</button></p>
+    </form>
+</section>

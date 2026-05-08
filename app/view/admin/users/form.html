@@ -1,0 +1,18 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form method="post" action="{$action}">{include file="admin/partials/csrf" /}
+        <div class="form-grid">
+            <div><label>用户名</label><input name="username" value="{$user.username|default=''}" required></div>
+            <div><label>显示名</label><input name="display_name" value="{$user.display_name|default=''}"></div>
+            <div><label>邮箱</label><input name="email" value="{$user.email|default=''}"></div>
+            <div><label>手机号</label><input name="phone" value="{$user.phone|default=''}"></div>
+            <div><label>头像地址</label><input name="avatar_url" value="{$user.avatar_url|default=''}"></div>
+            <div><label>密码</label><input type="password" name="password" placeholder="编辑时留空则不修改"></div>
+            <div><label>角色</label><select name="role" data-current="{$user.role|default='USER'}"><option value="USER">普通用户</option><option value="ADMIN">管理员</option></select></div>
+            <div><label>等级</label><select name="level" data-current="{$user.level|default='NORMAL'}"><option value="NORMAL">普通</option><option value="VIP">会员</option><option value="SVIP">超级会员</option></select></div>
+            <div><label>状态</label><select name="status" data-current="{$user.status|default='ACTIVE'}"><option value="ACTIVE">正常</option><option value="DISABLED">已禁用</option><option value="PENDING">待处理</option></select></div>
+            <div><label>有效期</label><input name="valid_until" value="{$user.valid_until|default=''}" placeholder="年-月-日 时:分:秒"></div>
+        </div>
+        <p class="actions"><button type="submit">保存</button><a class="btn secondary" href="/admin/users">返回</a></p>
+    </form>
+</section>

@@ -1,0 +1,2 @@
+{layout name="admin/layout" /}
+<section class="card"><form method="post" action="{$action}">{include file="admin/partials/csrf" /}<label>名称</label><input name="name" value="{$category.name|default=''}" required><label>Slug</label><input name="slug" value="{$category.slug|default=''}" required><label>简介</label><textarea name="description">{$category.description|default=''}</textarea><p class="actions"><button type="submit">保存</button><a class="btn secondary" href="/admin/categories">返回</a></p></form></section>

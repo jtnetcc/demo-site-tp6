@@ -1,0 +1,28 @@
+{layout name="admin/layout" /}
+<section class="card">
+    <form class="filter" method="get" action="/admin/categories">
+        <input name="q" value="{$filters.q|default=''}" placeholder="分类名称/slug/简介">
+        <button type="submit">筛选</button>
+        <button type="button" class="secondary" data-modal-target="#category-create-modal">新增分类</button>
+    </form>
+</section>
+<section class="card">
+    <table class="table">
+        <tr><th>编号</th><th>名称</th><th>Slug</th><th>简介</th><th>操作</th></tr>
+        {volist name="categories" id="category" empty="<tr><td colspan='5'>暂无分类</td></tr>"}
+        <tr>
+            <td>{$category.id}</td>
+            <td>{$category.name}</td>
+            <td>{$category.slug}</td>
+            <td>{$category.description|default=''}</td>
+            <td class="actions">
+                <button type="button" class="secondary" data-modal-target="#category-edit-{$category.id}">编辑</button>
+                <form class="inline-form" method="post" action="/admin/categories/{$category.id}/delete">{include file="admin/partials/csrf" /}<button class="danger" type="submit">删除</button></form>
+            </td>
+        </tr>
+        <div class="modal" id="category-edit-{$category.id}" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">编辑分类</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/categories/{$category.id}">{include file="admin/partials/csrf" /}<label>名称</label><input name="name" value="{$category.name}" required><label>Slug</label><input name="slug" value="{$category.slug}" required><label>简介</label><textarea name="description">{$category.description|default=''}</textarea><p class="actions"><button type="submit">保存</button></p></form></div></div></div>
+        {/volist}
+    </table>
+</section>
+<section>{$categories|raw}</section>
+<div class="modal" id="category-create-modal" aria-hidden="true"><div class="modal-backdrop"></div><div class="modal-panel"><div class="modal-header"><div class="modal-title">新增分类</div><button type="button" class="modal-close" data-modal-close>关闭</button></div><div class="modal-body"><form method="post" action="/admin/categories">{include file="admin/partials/csrf" /}<label>名称</label><input name="name" required><label>Slug</label><input name="slug" required><label>简介</label><textarea name="description"></textarea><p class="actions"><button type="submit">保存</button></p></form></div></div></div>
