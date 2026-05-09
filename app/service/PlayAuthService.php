@@ -141,7 +141,7 @@ class PlayAuthService
         ], $signed);
     }
 
-    public function hasRequiredLevel(string $userLevel, ?string $requiredLevel): bool
+    private function hasRequiredLevel(string $userLevel, ?string $requiredLevel): bool
     {
         if (!$requiredLevel) {
             return true;

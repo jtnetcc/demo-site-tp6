@@ -7,6 +7,7 @@ use app\model\Grant;
 use app\model\User;
 use app\model\WatchHistory;
 use RuntimeException;
+use think\Request;
 
 class MeService
 {
@@ -28,8 +29,6 @@ class MeService
     public function updateProfile(User $user, array $data): User
     {
         $displayName = trim((string) ($data['display_name'] ?? ''));
-        $email = trim((string) ($data['email'] ?? ''));
-        $phone = trim((string) ($data['phone'] ?? ''));
         $avatarUrl = trim((string) ($data['avatar_url'] ?? ''));
 
         if ($displayName === '') {
@@ -40,26 +39,53 @@ class MeService
             throw new RuntimeException('显示名不能超过100个字符', 400);
         }
 
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new RuntimeException('邮箱格式不正确', 400);
-        }
-
-        if ($email !== '' && User::where('email', $email)->where('id', '<>', (int) $user->id)->find()) {
-            throw new RuntimeException('邮箱已存在', 409);
-        }
-
-        if ($phone !== '' && User::where('phone', $phone)->where('id', '<>', (int) $user->id)->find()) {
-            throw new RuntimeException('手机号已存在', 409);
-        }
-
         $user->save([
             'display_name' => $displayName,
-            'email' => $email ?: null,
-            'phone' => $phone ?: null,
             'avatar_url' => $avatarUrl ?: null,
         ]);
 
         return $user;
+    }
+
+    public function requestBindCode(User $user, string $channel, string $account, Request $request): void
+    {
+        $channel = $this->contactChannel($channel);
+        $account = trim($account);
+        $auth = new AuthService();
+        $auth->assertRegisterAccount($channel, $account);
+        $auth->assertUnique($channel, $account, $channel === 'email' ? '邮箱已存在' : '手机号已存在', (int) $user->id);
+        (new AccountVerificationService())->requestCode('bind', $channel, $account, $user, $request);
+    }
+
+    public function bindContact(User $user, array $data): User
+    {
+        $channel = $this->contactChannel((string) ($data['channel'] ?? ''));
+        $account = trim((string) ($data['account'] ?? ''));
+        $code = trim((string) ($data['code'] ?? ''));
+        $auth = new AuthService();
+
+        $auth->assertRegisterAccount($channel, $account);
+        $auth->assertUnique($channel, $account, $channel === 'email' ? '邮箱已存在' : '手机号已存在', (int) $user->id);
+
+        if ($code === '') {
+            throw new RuntimeException('请输入验证码', 400);
+        }
+
+        (new AccountVerificationService())->verifyCode('bind', $channel, $account, $code, $user);
+
+        if ($channel === 'email') {
+            $user->save([
+                'email' => $account,
+                'email_verified_at' => date('Y-m-d H:i:s'),
+            ]);
+        } else {
+            $user->save([
+                'phone' => $account,
+                'phone_verified_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
+        return User::find((int) $user->id) ?: $user;
     }
 
     public function history(User $user, array $filters)
@@ -81,6 +107,15 @@ class MeService
     public function courses(User $user): array
     {
         return (new CourseService())->myCourses($user);
+    }
+
+    private function contactChannel(string $channel): string
+    {
+        if (!in_array($channel, ['email', 'phone'], true)) {
+            throw new RuntimeException('验证码渠道不正确', 400);
+        }
+
+        return $channel;
     }
 
     private function activeGrants(User $user)

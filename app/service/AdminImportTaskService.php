@@ -70,22 +70,6 @@ class AdminImportTaskService
         return $this->createUpload($data, $admin, $file);
     }
 
-    public function createNetdiskForVideo(Video $video, array $data, User $admin): ?ImportTask
-    {
-        $text = trim((string) ($data['baidu_share_text'] ?? $data['share_raw_text'] ?? ''));
-
-        if ($text === '' && empty($data['share_url'])) {
-            return null;
-        }
-
-        return $this->createNetdisk(array_merge($data, [
-            'kind' => 'VIDEO',
-            'video_id' => (int) $video->id,
-            'source_type' => 'NETDISK',
-            'baidu_share_text' => $text !== '' ? $text : (string) $data['share_url'],
-        ]), $admin, false);
-    }
-
     public function process(int $id): ImportTask
     {
         $task = ImportTask::find($id);

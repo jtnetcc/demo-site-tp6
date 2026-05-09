@@ -51,7 +51,7 @@ class AdminUserService
             throw new RuntimeException('用户不存在', 404);
         }
 
-        $payload = $this->payload($data, false);
+        $payload = $this->payload($data, false, $user);
 
         if ($admin && (int) $admin->id === (int) $user->id) {
             if (($payload['role'] ?? $user->role) !== 'ADMIN') {
@@ -83,18 +83,35 @@ class AdminUserService
         return (bool) $user->delete();
     }
 
-    private function payload(array $data, bool $creating): array
+    private function payload(array $data, bool $creating, ?User $existing = null): array
     {
+        $auth = new AuthService();
+        $exceptUserId = $existing ? (int) $existing->id : null;
         $username = trim((string) ($data['username'] ?? ''));
         $displayName = trim((string) ($data['display_name'] ?? ''));
+        $email = $this->nullable($data['email'] ?? null);
+        $phone = $this->nullable($data['phone'] ?? null);
         $password = (string) ($data['password'] ?? '');
 
-        if ($username === '') {
-            throw new RuntimeException('用户名不能为空', 400);
+        $auth->assertUsername($username);
+        $auth->assertUnique('username', $username, '用户名已存在', $exceptUserId);
+
+        if ($email !== null) {
+            $auth->assertEmail($email);
+            $auth->assertUnique('email', $email, '邮箱已存在', $exceptUserId);
+        }
+
+        if ($phone !== null) {
+            $auth->assertPhone($phone);
+            $auth->assertUnique('phone', $phone, '手机号已存在', $exceptUserId);
         }
 
         if ($displayName === '') {
             $displayName = $username;
+        }
+
+        if (mb_strlen($displayName) > 100) {
+            throw new RuntimeException('显示名不能超过100个字符', 400);
         }
 
         if ($creating && $password === '') {
@@ -108,14 +125,24 @@ class AdminUserService
         $payload = [
             'username' => $username,
             'display_name' => $displayName,
-            'email' => $this->nullable($data['email'] ?? null),
-            'phone' => $this->nullable($data['phone'] ?? null),
+            'email' => $email,
+            'phone' => $phone,
             'avatar_url' => $this->nullable($data['avatar_url'] ?? null),
             'role' => in_array(($data['role'] ?? 'USER'), ['ADMIN', 'USER'], true) ? $data['role'] : 'USER',
             'level' => in_array(($data['level'] ?? 'NORMAL'), ['NORMAL', 'VIP', 'SVIP'], true) ? $data['level'] : 'NORMAL',
             'status' => in_array(($data['status'] ?? 'ACTIVE'), ['ACTIVE', 'DISABLED', 'PENDING'], true) ? $data['status'] : 'ACTIVE',
             'valid_until' => $this->nullableDate($data['valid_until'] ?? null),
         ];
+
+        if ($existing) {
+            if ($email !== $this->nullable($existing->email)) {
+                $payload['email_verified_at'] = null;
+            }
+
+            if ($phone !== $this->nullable($existing->phone)) {
+                $payload['phone_verified_at'] = null;
+            }
+        }
 
         if ($password !== '') {
             $payload['password_hash'] = password_hash($password, PASSWORD_DEFAULT);

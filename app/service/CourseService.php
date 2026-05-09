@@ -46,7 +46,7 @@ class CourseService
         ];
     }
 
-    public function publishedLessons(int $courseId)
+    private function publishedLessons(int $courseId)
     {
         return Lesson::where('course_id', $courseId)
             ->where('status', 'PUBLISHED')
@@ -79,7 +79,7 @@ class CourseService
         ];
     }
 
-    public function userCanAccess(?User $user, int $courseId): array
+    private function userCanAccess(?User $user, int $courseId): array
     {
         if (!$user) {
             return ['allowed' => false, 'reason' => '请先登录', 'access_type' => 'guest'];

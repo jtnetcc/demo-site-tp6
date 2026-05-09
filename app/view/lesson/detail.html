@@ -9,12 +9,14 @@
         <div class="page-actions"><a class="btn secondary" href="/course/{$course.id}">返回课程</a></div>
     </div>
     {if condition="$access.allowed"}<div class="flash ok" role="status"><div><strong>可以学习</strong><span>{$access.reason}</span></div></div>{else /}<div class="flash err" role="alert"><div><strong>暂不可学习</strong><span>{$access.reason}</span></div></div>{/if}
-    {if condition="$access.allowed"}
+    {if condition="$access.allowed && $lesson.video_object_key"}
     <div id="lessonPlayerWrap" class="player-wrap" oncontextmenu="return false">
         <video id="lessonPlayer" class="video-js vjs-default-skin video-player" controls preload="metadata" playsinline controlsList="nodownload noremoteplayback" disablePictureInPicture></video>
         <div class="player-watermark">{$currentUser.display_name|default=$currentUser.username|default='在线学习平台'}</div>
     </div>
     <div id="lessonPlayerStatus" class="player-status loading">正在加载播放地址…</div>
+    {elseif condition="$access.allowed" /}
+    <div id="lessonPlayerStatus" class="player-status ready">课时视频资源尚未配置，请稍后再试。</div>
     {else /}
     <div id="lessonPlayerStatus" class="player-status error">{$access.reason}</div>
     <div class="section"><a class="btn secondary" href="/course/{$course.id}">查看课程权限</a></div>
@@ -25,13 +27,15 @@
     <div class="grid compact">{volist name="lessons" id="item"}<article class="card lesson-item {if condition="$item.id == $lesson.id"}active{/if}"><span class="badge gray">课时</span><h3>{if condition="$item.video_object_key"}<a href="/course/{$course.id}/lesson/{$item.id}">{$item.title}</a>{else /}{$item.title}{/if}</h3>{if condition="$item.id == $lesson.id"}<span class="tag">正在学习</span>{elseif condition="!$item.video_object_key" /}<span class="tag gray">资源准备中</span>{/if}</article>{/volist}</div>
 </section>
 <script>
-const lessonCanPlay={if condition="$access.allowed"}true{else /}false{/if};
+const lessonCanPlay={if condition="$access.allowed && $lesson.video_object_key"}true{else /}false{/if};
 const lessonPlayAuthUrl='/course/{$course.id}/lesson/{$lesson.id}/play-auth';
 {literal}
 let lessonPlayerInstance=null;
+let nativeLessonPlayerBound=false;
 function csrfHeaders(){const token=document.querySelector('meta[name="csrf-token"]')?.content||'';const headers={'X-Requested-With':'XMLHttpRequest'};if(token){headers['X-CSRF-Token']=token;}return headers;}
 function setLessonStatus(text,type,link){const el=document.getElementById('lessonPlayerStatus');if(!el){return;}el.textContent='';el.className='player-status '+(type||'');el.appendChild(document.createTextNode(text));if(link){const a=document.createElement('a');a.className='btn secondary';a.href=link;a.textContent='打开网盘页面';a.style.marginLeft='10px';el.appendChild(a);}el.style.display='block';}
-function secureLessonPlayer(){if(!lessonPlayerInstance){lessonPlayerInstance=videojs('lessonPlayer',{controlBar:{pictureInPictureToggle:false},userActions:{hotkeys:false}});lessonPlayerInstance.on('error',()=>setLessonStatus('播放器加载失败，请刷新或稍后重试。','error'));document.getElementById('lessonPlayer').addEventListener('contextmenu',e=>e.preventDefault());}return lessonPlayerInstance;}
+function nativeLessonPlayer(){const el=document.getElementById('lessonPlayer');el.classList.remove('video-js','vjs-default-skin');if(!nativeLessonPlayerBound){nativeLessonPlayerBound=true;el.addEventListener('error',function(){setLessonStatus('播放器加载失败，请刷新或稍后重试。','error');});el.addEventListener('contextmenu',function(e){e.preventDefault();});}return {src:function(source){el.pause();el.removeAttribute('src');el.innerHTML='';const child=document.createElement('source');child.src=source.src;child.type=source.type||'video/mp4';el.appendChild(child);el.load();},play:function(){return el.play();}};}
+function secureLessonPlayer(){if(window.videojs){if(!lessonPlayerInstance){lessonPlayerInstance=videojs('lessonPlayer',{controlBar:{pictureInPictureToggle:false},userActions:{hotkeys:false}});lessonPlayerInstance.on('error',function(){setLessonStatus('播放器加载失败，请刷新或稍后重试。','error');});document.getElementById('lessonPlayer').addEventListener('contextmenu',function(e){e.preventDefault();});}return lessonPlayerInstance;}return nativeLessonPlayer();}
 async function loadLesson(){if(!lessonCanPlay){return;}setLessonStatus('正在获取安全播放地址…','loading');try{const r=await fetch(lessonPlayAuthUrl,{method:'POST',headers:csrfHeaders()});const j=await r.json();if(!r.ok){throw new Error(j.error||'无法播放');}if(j.data.playback_mode==='external'){setLessonStatus(j.data.fallback_reason||'该网盘资源暂时无法在站内播放器直接播放，可以打开网盘页面。','ready',j.data.play_url);return;}const p=secureLessonPlayer();p.src({src:j.data.play_url,type:j.data.mime_type||'video/mp4'});setLessonStatus('视频已加载，请点击播放器开始播放。','ready');}catch(e){setLessonStatus(e.message||'无法播放','error');}}
 document.addEventListener('DOMContentLoaded',loadLesson);
 {/literal}

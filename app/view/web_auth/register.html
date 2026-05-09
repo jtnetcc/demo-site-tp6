@@ -1,16 +1,90 @@
 {layout name="layout/base" /}
 <section class="auth-shell">
-    <div class="auth-aside"><p class="page-kicker">JOIN US</p><h1>创建学习账号</h1><p class="muted">注册后即可收藏内容、记录观看进度，并按会员等级访问课程。</p></div>
+    <div class="auth-aside"><p class="page-kicker">JOIN US</p><h1>创建学习账号</h1><p class="muted">可以使用用户名、邮箱或手机号注册。邮箱和手机号注册需要先完成验证码验证。</p></div>
     <div class="card auth-card">
         <h1>注册</h1>
-        <form method="post" action="/register">
-            <label>用户名</label><input name="username" required autocomplete="username">
-            <label>显示名</label><input name="display_name" autocomplete="name">
-            <label>邮箱</label><input name="email" type="email" autocomplete="email">
-            <label>手机号</label><input name="phone" type="tel" autocomplete="tel">
-            <label>密码</label><input name="password" type="password" required autocomplete="new-password">
+        <form method="post" action="/register" id="register-form">
+            <input type="hidden" name="_csrf" value="{$webCsrfToken|default=''}">
+            <label>注册方式</label>
+            <div class="chip-row" role="radiogroup" aria-label="注册方式">
+                <label class="chip"><input type="radio" name="register_type" value="username" checked style="width:auto"> 用户名</label>
+                <label class="chip"><input type="radio" name="register_type" value="email" style="width:auto" {if condition="!$channels.email"}disabled{/if}> 邮箱</label>
+                <label class="chip"><input type="radio" name="register_type" value="phone" style="width:auto" {if condition="!$channels.phone"}disabled{/if}> 手机号</label>
+            </div>
+            <label id="account-label">用户名</label>
+            <input name="account" id="register-account" required maxlength="191" autocomplete="username" placeholder="请输入用户名">
+            <p class="muted" id="register-tip">用户名注册成功后，需要先绑定邮箱或手机号才能继续使用登录后功能。</p>
+            <div id="code-panel" hidden>
+                <label id="code-label">验证码</label>
+                <div class="form-row">
+                    <input name="code" id="register-code" maxlength="16" inputmode="numeric" autocomplete="one-time-code" placeholder="请输入验证码">
+                    <button class="button secondary" type="button" id="send-register-code">发送验证码</button>
+                </div>
+                <p class="muted" id="code-message"></p>
+            </div>
+            <label>显示名</label><input name="display_name" maxlength="100" autocomplete="name" placeholder="可选，默认使用注册账号">
+            <label>密码</label><input name="password" type="password" required autocomplete="new-password" minlength="6" maxlength="255">
             <div class="section"><button class="button" type="submit">创建账号</button></div>
         </form>
+        {if condition="$channels.email"}<span data-channel-enabled="email" hidden></span>{/if}
+        {if condition="$channels.phone"}<span data-channel-enabled="phone" hidden></span>{/if}
         <p class="muted">已有账号？<a href="/login">去登录</a></p>
     </div>
 </section>
+<script>
+(function(){
+    var form=document.getElementById('register-form');
+    if(!form){return;}
+    var account=document.getElementById('register-account');
+    var accountLabel=document.getElementById('account-label');
+    var tip=document.getElementById('register-tip');
+    var codePanel=document.getElementById('code-panel');
+    var codeInput=document.getElementById('register-code');
+    var codeLabel=document.getElementById('code-label');
+    var sendButton=document.getElementById('send-register-code');
+    var message=document.getElementById('code-message');
+    var csrf=form.querySelector('input[name="_csrf"]').value;
+    var enabled={email:!!document.querySelector('[data-channel-enabled="email"]'),phone:!!document.querySelector('[data-channel-enabled="phone"]')};
+    var meta={
+        username:{label:'用户名',placeholder:'请输入用户名',autocomplete:'username',tip:'用户名注册成功后，需要先绑定邮箱或手机号才能继续使用登录后功能。'},
+        email:{label:'邮箱',placeholder:'请输入邮箱地址',autocomplete:'email',tip:'邮箱验证码验证通过后即可直接注册成功。'},
+        phone:{label:'手机号',placeholder:'请输入手机号',autocomplete:'tel',tip:'手机验证码验证通过后即可直接注册成功。'}
+    };
+    function currentType(){
+        var checked=form.querySelector('input[name="register_type"]:checked');
+        return checked?checked.value:'username';
+    }
+    function updateType(){
+        var type=currentType();
+        if(type!=='username'&&!enabled[type]){
+            form.querySelector('input[name="register_type"][value="username"]').checked=true;
+            type='username';
+        }
+        accountLabel.textContent=meta[type].label;
+        account.placeholder=meta[type].placeholder;
+        account.autocomplete=meta[type].autocomplete;
+        tip.textContent=meta[type].tip;
+        codePanel.hidden=type==='username';
+        codeInput.required=type!=='username';
+        codeLabel.textContent=type==='phone'?'短信验证码':'邮箱验证码';
+        sendButton.disabled=type==='username'||!enabled[type];
+        sendButton.textContent=type==='phone'?'发送短信验证码':'发送邮箱验证码';
+        message.textContent=type!=='username'&&!enabled[type]?'当前验证码渠道暂未开启，请联系管理员或改用用户名注册。':'';
+    }
+    form.querySelectorAll('input[name="register_type"]').forEach(function(input){input.addEventListener('change',updateType);});
+    sendButton.addEventListener('click',function(){
+        var type=currentType();
+        if(type==='username'||!enabled[type]){return;}
+        message.textContent='正在发送...';
+        sendButton.disabled=true;
+        fetch('/register/send-code',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','X-Requested-With':'XMLHttpRequest'},body:new URLSearchParams({_csrf:csrf,channel:type,account:account.value})})
+            .then(function(response){return response.json().then(function(payload){return {ok:response.ok,payload:payload};});})
+            .then(function(result){
+                message.textContent=result.ok?(result.payload.message||'验证码已发送'):(result.payload.error||'验证码发送失败');
+            })
+            .catch(function(){message.textContent='验证码发送失败，请稍后重试';})
+            .finally(function(){var current=currentType();sendButton.disabled=current==='username'||!enabled[current];});
+    });
+    updateType();
+})();
+</script>

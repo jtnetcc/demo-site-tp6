@@ -1,18 +1,21 @@
 {layout name="admin/layout" /}
 <section class="card" data-tabs>
     <form method="post" action="/admin/settings">{include file="admin/partials/csrf" /}
+        <input type="hidden" name="active_tab" value="settings-base" data-active-tab-input>
         <div class="tabs">
             <button class="tab-btn active" data-tab-target="#settings-base" type="button">基础信息</button>
             <button class="tab-btn" data-tab-target="#settings-header" type="button">头部</button>
             <button class="tab-btn" data-tab-target="#settings-footer" type="button">底部</button>
             <button class="tab-btn" data-tab-target="#settings-seo" type="button">SEO</button>
             <button class="tab-btn" data-tab-target="#settings-storage" type="button">存储</button>
+            <button class="tab-btn" data-tab-target="#settings-recovery" type="button">找回密码</button>
             <button class="tab-btn" data-tab-target="#settings-other" type="button">其他</button>
             <button class="tab-btn" data-tab-target="#settings-json" type="button">高级 JSON</button>
         </div>
 
         <div class="tab-panel active" id="settings-base">
             <h2>基础信息</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[base_info]" value="1">恢复默认基础信息</button></p>
             <div class="form-grid">
                 <div><label>站点名</label><input name="base_info[siteName]" value="{$form.base_info.siteName|default=''}"></div>
                 <div><label>副标题</label><input name="base_info[siteSubtitle]" value="{$form.base_info.siteSubtitle|default=''}"></div>
@@ -27,6 +30,7 @@
 
         <div class="tab-panel" id="settings-header">
             <h2>头部</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[header]" value="1">恢复默认头部</button></p>
             <label class="check"><input type="checkbox" name="header[announcementEnabled]" value="1" {if condition="$form.header.announcementEnabled"}checked{/if}> 开启公告</label>
             <label>公告内容</label><textarea name="header[announcementText]">{$form.header.announcementText|default=''}</textarea>
             <div class="form-grid"><div><label>头部联系电话</label><input name="header[contactPhone]" value="{$form.header.contactPhone|default=''}"></div><div><label>头部联系邮箱</label><input name="header[contactEmail]" value="{$form.header.contactEmail|default=''}"></div></div>
@@ -36,6 +40,7 @@
 
         <div class="tab-panel" id="settings-footer">
             <h2>底部</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[footer]" value="1">恢复默认底部</button></p>
             <label>版权文字</label><input name="footer[copyrightText]" value="{$form.footer.copyrightText|default=''}">
             <h3>页脚链接</h3>{volist name="form.footer.menuLinkSlots" id="link"}<div class="form-grid"><div><label>名称</label><input name="footer[menuLinks][label][]" value="{$link.label|default=''}"></div><div><label>链接</label><input name="footer[menuLinks][url][]" value="{$link.url|default=''}"></div></div>{/volist}
             <label>技术支持</label><input name="footer[techSupportText]" value="{$form.footer.techSupportText|default=''}">
@@ -44,6 +49,7 @@
 
         <div class="tab-panel" id="settings-seo">
             <h2>SEO</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[seo]" value="1">恢复默认 SEO</button></p>
             <div class="form-grid"><div><label>首页标题</label><input name="seo[homeTitle]" value="{$form.seo.homeTitle|default=''}"></div><div><label>社交分享图</label><input name="seo[ogImageObjectKey]" value="{$form.seo.ogImageObjectKey|default=''}"></div><div><label>分享图</label><input name="seo[shareImageObjectKey]" value="{$form.seo.shareImageObjectKey|default=''}"></div></div>
             <label>关键词</label><input name="seo[homeKeywords]" value="{$form.seo.homeKeywordsText|default=''}" placeholder="用逗号或换行分隔">
             <label>首页描述</label><textarea name="seo[homeDescription]">{$form.seo.homeDescription|default=''}</textarea>
@@ -52,6 +58,7 @@
 
         <div class="tab-panel" id="settings-storage">
             <h2>存储</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[storage]" value="1">恢复默认存储</button></p>
             <p class="muted">默认本地存储；视频资源可填写本地相对路径、HTTP 直链或可播放的网盘链接。</p>
             <div class="form-grid">
                 <div><label>存储方式</label><select name="storage[driver]" data-current="{$form.storage.driver|default='local'}"><option value="local">本地存储</option><option value="netdisk">网盘链接</option></select></div>
@@ -73,13 +80,52 @@
             <label>Cookie / 凭据</label><textarea name="netdisk[baidu][cookie]" placeholder="如需解析服务使用百度凭据，可填在这里；不会返回给前端。">{$form.netdisk.baidu.cookie|default=''}</textarea>
         </div>
 
+        <div class="tab-panel" id="settings-recovery">
+            <h2>验证码/找回密码</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[passwordRecovery]" value="1">恢复默认验证码/找回密码</button></p>
+            <p class="muted">这里的邮箱和短信配置同时用于注册验证码、联系方式绑定验证码和找回密码。密码、API Key、Secret 留空保存时会保持原值。</p>
+            <label class="check"><input type="checkbox" name="passwordRecovery[enabled]" value="1" {if condition="$form.passwordRecovery.enabled"}checked{/if}> 开启验证码/找回密码功能</label>
+            <div class="form-grid">
+                <div><label>有效期分钟</label><input type="number" name="passwordRecovery[expiresMinutes]" value="{$form.passwordRecovery.expiresMinutes|default=30}"></div>
+                <div><label>验证码长度</label><input type="number" name="passwordRecovery[codeLength]" value="{$form.passwordRecovery.codeLength|default=6}"></div>
+                <div><label>最大错误次数</label><input type="number" name="passwordRecovery[maxAttempts]" value="{$form.passwordRecovery.maxAttempts|default=5}"></div>
+                <div><label>重发冷却秒数</label><input type="number" name="passwordRecovery[resendCooldownSeconds]" value="{$form.passwordRecovery.resendCooldownSeconds|default=60}"></div>
+            </div>
+            <h3>邮箱验证码</h3>
+            <label class="check"><input type="checkbox" name="passwordRecovery[email][enabled]" value="1" {if condition="$form.passwordRecovery.email.enabled"}checked{/if}> 启用邮箱验证码</label>
+            <div class="form-grid">
+                <div><label>发送方式</label><select name="passwordRecovery[email][driver]" data-current="{$form.passwordRecovery.email.driver|default='smtp'}"><option value="smtp">SMTP</option><option value="mail">PHP mail</option></select></div>
+                <div><label>发件邮箱</label><input name="passwordRecovery[email][fromEmail]" value="{$form.passwordRecovery.email.fromEmail|default=''}"></div>
+                <div><label>发件名称</label><input name="passwordRecovery[email][fromName]" value="{$form.passwordRecovery.email.fromName|default=''}"></div>
+                <div><label>SMTP 主机</label><input name="passwordRecovery[email][smtp][host]" value="{$form.passwordRecovery.email.smtp.host|default=''}"></div>
+                <div><label>SMTP 端口</label><input type="number" name="passwordRecovery[email][smtp][port]" value="{$form.passwordRecovery.email.smtp.port|default=587}"></div>
+                <div><label>加密方式</label><select name="passwordRecovery[email][smtp][encryption]" data-current="{$form.passwordRecovery.email.smtp.encryption|default='tls'}"><option value="tls">TLS</option><option value="ssl">SSL</option><option value="none">不加密</option></select></div>
+                <div><label>SMTP 用户名</label><input name="passwordRecovery[email][smtp][username]" value="{$form.passwordRecovery.email.smtp.username|default=''}"></div>
+                <div><label>SMTP 密码 / 授权码</label><input type="password" name="passwordRecovery[email][smtp][password]" placeholder="留空则保持不变"></div>
+                <div><label>超时秒数</label><input type="number" name="passwordRecovery[email][smtp][timeoutSeconds]" value="{$form.passwordRecovery.email.smtp.timeoutSeconds|default=10}"></div>
+            </div>
+            <h3>短信验证码</h3>
+            <label class="check"><input type="checkbox" name="passwordRecovery[phone][enabled]" value="1" {if condition="$form.passwordRecovery.phone.enabled"}checked{/if}> 启用短信验证码</label>
+            <div class="form-grid">
+                <div><label>短信服务商</label><select name="passwordRecovery[phone][provider]" data-current="{$form.passwordRecovery.phone.provider|default='none'}"><option value="none">暂不发送</option><option value="generic_http">通用 HTTP 接口</option></select></div>
+                <div><label>请求方式</label><select name="passwordRecovery[phone][method]" data-current="{$form.passwordRecovery.phone.method|default='POST'}"><option value="POST">POST</option><option value="GET">GET</option></select></div>
+                <div><label>接口地址</label><input name="passwordRecovery[phone][endpoint]" value="{$form.passwordRecovery.phone.endpoint|default=''}"></div>
+                <div><label>API Key</label><input type="password" name="passwordRecovery[phone][apiKey]" placeholder="留空则保持不变"></div>
+                <div><label>Secret</label><input type="password" name="passwordRecovery[phone][secret]" placeholder="留空则保持不变"></div>
+                <div><label>短信签名</label><input name="passwordRecovery[phone][signName]" value="{$form.passwordRecovery.phone.signName|default=''}"></div>
+            </div>
+            <label>短信模板</label><textarea name="passwordRecovery[phone][template]">{$form.passwordRecovery.phone.template|default=''}</textarea>
+            <label>请求头 JSON</label><textarea name="passwordRecovery[phone][headersJson]" placeholder='留空则保持不变，例如 {"Authorization":"Bearer xxx"}'></textarea>
+        </div>
+
         <div class="tab-panel" id="settings-other">
             <h2>其他</h2>
+            <p class="actions"><button class="secondary" type="submit" name="reset_defaults[other]" value="1">恢复默认其他设置</button><button class="secondary" type="submit" name="reset_defaults[homepage]" value="1">恢复默认首页内容</button></p>
             <label class="check"><input type="checkbox" name="other[maintenanceEnabled]" value="1" {if condition="$form.other.maintenanceEnabled"}checked{/if}> 开启维护模式</label>
             <label>维护公告</label><textarea name="other[maintenanceNotice]">{$form.other.maintenanceNotice|default=''}</textarea>
             <div class="form-grid"><div><label>默认语言</label><input name="other[defaultLanguage]" value="{$form.other.defaultLanguage|default='zh-CN'}"></div><div><label>时区</label><input name="other[timezone]" value="{$form.other.timezone|default='Asia/Shanghai'}"></div></div>
             <h2>首页内容</h2>
-            <p class="muted">配置首页首屏标题、按钮和三张说明卡片。</p>
+            <p class="muted">配置首页首屏标题、按钮和说明卡片。</p>
             <div class="form-grid">
                 <div><label>首页小标题</label><input name="other[homepage][hero][kicker]" value="{$form.homepage.hero.kicker|default=''}"></div>
                 <div><label>首页主标题</label><input name="other[homepage][hero][title]" value="{$form.homepage.hero.title|default=''}"></div>

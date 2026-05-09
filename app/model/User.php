@@ -16,14 +16,24 @@ class User extends Model
         'id' => 'integer',
         'valid_until' => 'datetime',
         'email_verified_at' => 'datetime',
+        'phone_verified_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
     protected $hidden = [
         'password_hash',
-        'activation_token',
     ];
+
+    public function passwordResets()
+    {
+        return $this->hasMany(PasswordReset::class, 'user_id', 'id');
+    }
+
+    public function accountVerifications()
+    {
+        return $this->hasMany(AccountVerification::class, 'user_id', 'id');
+    }
 
     public function grants()
     {

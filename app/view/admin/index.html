@@ -8,9 +8,53 @@
     <div class="card"><div class="muted">授权</div><div class="stat">{$stats.grants}</div></div>
     <div class="card"><div class="muted">观看记录</div><div class="stat">{$stats.watchHistories}</div></div>
 </section>
-<section class="grid">
-    <div class="card"><h2>最近用户</h2><table class="table"><tr><th>编号</th><th>用户名</th><th>角色</th></tr>{volist name="recentUsers" id="user" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$user.id}</td><td>{$user.username}</td><td>{$user.role}</td></tr>{/volist}</table></div>
-    <div class="card"><h2>最近视频</h2><table class="table"><tr><th>编号</th><th>标题</th><th>状态</th></tr>{volist name="recentVideos" id="video" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$video.id}</td><td>{$video.title}</td><td>{$video.status}</td></tr>{/volist}</table></div>
-    <div class="card"><h2>最近课程</h2><table class="table"><tr><th>编号</th><th>标题</th><th>状态</th></tr>{volist name="recentCourses" id="course" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$course.id}</td><td>{$course.title}</td><td>{$course.status}</td></tr>{/volist}</table></div>
-    <div class="card"><h2>最近授权</h2><table class="table"><tr><th>编号</th><th>用户</th><th>课程</th></tr>{volist name="recentGrants" id="grant" empty="<tr><td colspan='3'>暂无数据</td></tr>"}<tr><td>{$grant.id}</td><td>{$grant.user.username|default=''}</td><td>{$grant.course.title|default=''}</td></tr>{/volist}</table></div>
+<section class="dashboard-grid">
+    <div class="card dashboard-card">
+        <h2>最近用户</h2>
+        <div class="dashboard-table-wrap">
+            <table class="table dashboard-table">
+                <colgroup><col class="col-id"><col><col class="col-role"></colgroup>
+                <tr><th>编号</th><th>用户名</th><th>角色</th></tr>
+                {volist name="recentUsers" id="user" empty="<tr><td colspan='3'>暂无数据</td></tr>"}
+                <tr><td class="id">{$user.id}</td><td class="username">{$user.username}</td><td class="role">{$user.role}</td></tr>
+                {/volist}
+            </table>
+        </div>
+    </div>
+    <div class="card dashboard-card">
+        <h2>最近视频</h2>
+        <div class="dashboard-table-wrap">
+            <table class="table dashboard-table">
+                <colgroup><col class="col-id"><col><col class="col-status"></colgroup>
+                <tr><th>编号</th><th>标题</th><th>状态</th></tr>
+                {volist name="recentVideos" id="video" empty="<tr><td colspan='3'>暂无数据</td></tr>"}
+                <tr><td class="id">{$video.id}</td><td class="title">{$video.title}</td><td class="status">{$video.status}</td></tr>
+                {/volist}
+            </table>
+        </div>
+    </div>
+    <div class="card dashboard-card">
+        <h2>最近课程</h2>
+        <div class="dashboard-table-wrap">
+            <table class="table dashboard-table">
+                <colgroup><col class="col-id"><col><col class="col-status"></colgroup>
+                <tr><th>编号</th><th>标题</th><th>状态</th></tr>
+                {volist name="recentCourses" id="course" empty="<tr><td colspan='3'>暂无数据</td></tr>"}
+                <tr><td class="id">{$course.id}</td><td class="title">{$course.title}</td><td class="status">{$course.status}</td></tr>
+                {/volist}
+            </table>
+        </div>
+    </div>
+    <div class="card dashboard-card">
+        <h2>最近授权</h2>
+        <div class="dashboard-table-wrap">
+            <table class="table dashboard-table">
+                <colgroup><col class="col-id"><col><col></colgroup>
+                <tr><th>编号</th><th>用户</th><th>课程</th></tr>
+                {volist name="recentGrants" id="grant" empty="<tr><td colspan='3'>暂无数据</td></tr>"}
+                <tr><td class="id">{$grant.id}</td><td class="username">{$grant.user.username|default=''}</td><td class="title">{$grant.course.title|default=''}</td></tr>
+                {/volist}
+            </table>
+        </div>
+    </div>
 </section>

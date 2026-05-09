@@ -4,6 +4,7 @@
     <div class="card auth-card">
         <h1>登录</h1>
         <form method="post" action="/login">
+            <input type="hidden" name="_csrf" value="{$webCsrfToken|default=''}">
             <input type="hidden" name="returnTo" value="{$returnTo|default='/me'}">
             <label>用户名 / 邮箱 / 手机号</label>
             <input name="account" required autocomplete="username">
@@ -11,6 +12,7 @@
             <input name="password" type="password" required autocomplete="current-password">
             <div class="section"><button class="button" type="submit">登录</button></div>
         </form>
+        <p class="muted">忘记密码？<a href="/forgot-password">找回密码</a></p>
         <p class="muted">还没有账号？<a href="/register">立即注册</a></p>
     </div>
 </section>

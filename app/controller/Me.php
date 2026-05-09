@@ -2,6 +2,8 @@
 
 namespace app\controller;
 
+use app\service\AccountVerificationService;
+use app\service\AuthService;
 use app\service\MeService;
 use RuntimeException;
 use think\Request;
@@ -38,6 +40,48 @@ class Me extends WebController
         return view('me/profile', $data);
     }
 
+    public function bindContact(Request $request)
+    {
+        $service = new MeService();
+
+        if ($request->isPost()) {
+            try {
+                $user = $service->bindContact($request->user, $request->post());
+                session('web_user', (new AuthService())->sanitizeUser($user));
+                session('flash_success', '联系方式已绑定');
+                return redirect('/me');
+            } catch (RuntimeException $e) {
+                session('flash_error', $e->getMessage());
+                return redirect('/me/bind-contact');
+            }
+        }
+
+        $data = $this->viewData([
+            'user' => (new AuthService())->sanitizeUser($request->user),
+            'channels' => (new AccountVerificationService())->channelOptions(),
+        ]);
+        $this->clearFlash();
+
+        return view('me/bind_contact', $data);
+    }
+
+    public function sendBindContactCode(Request $request)
+    {
+        try {
+            (new MeService())->requestBindCode(
+                $request->user,
+                (string) $request->post('channel', ''),
+                (string) $request->post('account', ''),
+                $request
+            );
+
+            return $this->codeResponse($request, '验证码已发送', true);
+        } catch (RuntimeException $e) {
+            $code = (int) $e->getCode();
+            return $this->codeResponse($request, $e->getMessage(), false, $code >= 400 && $code < 600 ? $code : 400);
+        }
+    }
+
     public function history(Request $request)
     {
         $data = $this->viewData(['histories' => (new MeService())->history($request->user, $request->get())]);
@@ -60,5 +104,16 @@ class Me extends WebController
         $this->clearFlash();
 
         return view('me/courses', $data);
+    }
+
+    private function codeResponse(Request $request, string $message, bool $success, int $status = 200)
+    {
+        if ($request->isAjax() || strtolower((string) $request->header('X-Requested-With')) === 'xmlhttprequest') {
+            return $success ? json(['message' => $message]) : json(['error' => $message, 'code' => $status], $status);
+        }
+
+        session($success ? 'flash_success' : 'flash_error', $message);
+
+        return redirect('/me/bind-contact');
     }
 }

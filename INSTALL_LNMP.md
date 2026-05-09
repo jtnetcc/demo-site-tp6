@@ -10,6 +10,8 @@
 - PHP 扩展：pdo、pdo_mysql、mbstring、openssl、json、session
 - 推荐扩展：gd、curl、fileinfo
 - 如需网盘转存/视频时长识别，建议安装 ffmpeg、ffprobe
+- 如需邮箱找回密码，请准备 SMTP 服务器、发件邮箱和授权码
+- 如需手机找回密码，请准备短信服务商的 HTTP 接口、签名和模板
 
 ## 上传和解压
 

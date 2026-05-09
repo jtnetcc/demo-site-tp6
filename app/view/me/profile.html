@@ -1,17 +1,15 @@
 {layout name="layout/base" /}
 {include file="partials/account_nav" /}
 <section class="section page-head">
-    <div><p class="page-kicker">PROFILE</p><h1>个人资料</h1><p>维护你的展示名称、联系方式和头像地址。</p></div>
+    <div><p class="page-kicker">PROFILE</p><h1>个人资料</h1><p>维护你的展示名称和头像地址；邮箱或手机号需要通过验证码绑定。</p></div>
 </section>
 <section class="section split-layout">
     <div class="card">
         <h2>资料设置</h2>
         <form method="post" action="/me/profile">
             <input type="hidden" name="_csrf" value="{$webCsrfToken|default=''}">
-            <label>显示名</label><input name="display_name" value="{$user.display_name}" autocomplete="name">
+            <label>显示名</label><input name="display_name" value="{$user.display_name}" required maxlength="100" autocomplete="name">
             <label>头像地址</label><input name="avatar_url" type="url" value="{$user.avatar_url|default=''}" placeholder="https://..." autocomplete="photo">
-            <label>邮箱</label><input name="email" type="email" value="{$user.email|default=''}" autocomplete="email">
-            <label>手机号</label><input name="phone" type="tel" value="{$user.phone|default=''}" autocomplete="tel">
             <div class="section"><button class="button" type="submit">保存资料</button></div>
         </form>
     </div>
@@ -21,6 +19,9 @@
             <div class="list-item"><span>角色</span><span class="badge gray">{$user.role}</span></div>
             <div class="list-item"><span>等级</span><span class="tag">{$user.level}</span></div>
             <div class="list-item"><span>状态</span><span class="badge gray">{$user.status}</span></div>
+            <div class="list-item"><span>邮箱</span><span>{$user.email|default='未绑定'} {if condition="$user.email_verified_at"}<span class="badge gray">已验证</span>{/if}</span></div>
+            <div class="list-item"><span>手机号</span><span>{$user.phone|default='未绑定'} {if condition="$user.phone_verified_at"}<span class="badge gray">已验证</span>{/if}</span></div>
         </div>
+        <p class="muted">需要绑定或更换联系方式？请前往 <a href="/me/bind-contact">绑定联系方式</a> 通过验证码完成。</p>
     </aside>
 </section>

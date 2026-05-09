@@ -16,6 +16,8 @@ DROP TABLE IF EXISTS `lessons`;
 DROP TABLE IF EXISTS `tags`;
 DROP TABLE IF EXISTS `categories`;
 DROP TABLE IF EXISTS `courses`;
+DROP TABLE IF EXISTS `password_resets`;
+DROP TABLE IF EXISTS `account_verifications`;
 DROP TABLE IF EXISTS `users`;
 
 CREATE TABLE `users` (
@@ -31,16 +33,59 @@ CREATE TABLE `users` (
   `status` ENUM('ACTIVE', 'DISABLED', 'PENDING') NOT NULL DEFAULT 'ACTIVE',
   `valid_until` DATETIME NULL,
   `email_verified_at` DATETIME NULL,
-  `activation_token` VARCHAR(191) NULL,
+  `phone_verified_at` DATETIME NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_username` (`username`),
   UNIQUE KEY `uk_users_email` (`email`),
   UNIQUE KEY `uk_users_phone` (`phone`),
-  UNIQUE KEY `uk_users_activation_token` (`activation_token`),
   KEY `idx_users_created_at` (`created_at`),
   KEY `idx_users_status_role` (`status`, `role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `account_verifications` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NULL,
+  `purpose` ENUM('register', 'bind') NOT NULL,
+  `channel` ENUM('email', 'phone') NOT NULL,
+  `recipient_hash` CHAR(64) NOT NULL,
+  `code_hash` VARCHAR(255) NOT NULL,
+  `attempt_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `request_ip` VARCHAR(64) NULL,
+  `user_agent` VARCHAR(500) NULL,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_account_verifications_lookup` (`purpose`, `channel`, `recipient_hash`),
+  KEY `idx_account_verifications_user` (`user_id`),
+  KEY `idx_account_verifications_expires_at` (`expires_at`),
+  CONSTRAINT `fk_account_verifications_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `password_resets` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `channel` ENUM('email', 'phone') NOT NULL,
+  `selector` VARCHAR(64) NULL,
+  `token_hash` VARCHAR(255) NULL,
+  `code_hash` VARCHAR(255) NULL,
+  `recipient_hash` CHAR(64) NOT NULL,
+  `attempt_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `request_ip` VARCHAR(64) NULL,
+  `user_agent` VARCHAR(500) NULL,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_password_resets_selector` (`selector`),
+  KEY `idx_password_resets_user_channel` (`user_id`, `channel`),
+  KEY `idx_password_resets_expires_at` (`expires_at`),
+  KEY `idx_password_resets_recipient_hash` (`recipient_hash`),
+  CONSTRAINT `fk_password_resets_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `courses` (
@@ -297,6 +342,14 @@ CREATE TABLE `site_settings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO `site_settings` (`id`, `base_info`, `header`, `footer`, `seo`, `other`, `created_at`, `updated_at`) VALUES
-(1, JSON_OBJECT(), JSON_OBJECT(), JSON_OBJECT(), JSON_OBJECT(), JSON_OBJECT(), NOW(), NOW());
+(1,
+ '{"siteName":"在线学习平台","siteSubtitle":"服务端渲染课程与视频学习平台","siteUrl":"","recordNumber":"","contactPhone":"","contactEmail":"","logoObjectKey":"","faviconObjectKey":""}',
+ '{"announcementEnabled":false,"announcementText":"","contactPhone":"","contactEmail":"","socialLinks":[],"customHtml":""}',
+ '{"copyrightText":"在线学习平台","menuLinks":[],"techSupportText":"","customHtml":""}',
+ '{"homeTitle":"在线学习平台","homeKeywords":[],"homeDescription":"","ogImageObjectKey":"","shareImageObjectKey":"","analyticsHtml":""}',
+ '{"maintenanceEnabled":false,"maintenanceNotice":"","defaultLanguage":"zh-CN","timezone":"Asia/Shanghai","storage":{"driver":"local","uploadPath":"public/uploads","publicBaseUrl":"","netdiskLinkFormat":"https://网盘域名/分享路径?pwd=提取码"},"homepage":{"hero":{"kicker":"ONLINE LEARNING","title":"系统学习，高效进阶","description":"精选视频、专题课程、会员权限和学习记录全部服务端渲染，打开即学，跨设备延续你的学习进度。","primaryButtonText":"浏览课程","primaryButtonUrl":"/courses","secondaryButtonText":"观看视频","secondaryButtonUrl":"/videos","userButtonText":"进入我的学习","userButtonUrl":"/me","guestButtonText":"免费注册","guestButtonUrl":"/register"},"featureCards":[{"badge":"快速访问","title":"服务端渲染","description":"页面结构清晰，首屏打开即显示内容。"},{"badge":"权限体系","title":"会员与授权","description":"支持普通、会员、超级会员与课程单独授权。"},{"badge":"学习闭环","title":"记录与收藏","description":"保留观看历史和收藏内容，方便持续学习。"},{"badge":"安全播放","title":"签名播放","description":"按用户权限生成播放地址，减少资源被直接复制传播。"},{"badge":"移动适配","title":"多端访问","description":"兼容电脑、平板和手机页面，学习内容随时打开。"}]},"netdisk":{"baidu":{"enabled":false,"mode":"direct-or-external","resolverEndpoint":"","accessToken":"","cookie":"","directUrlTtlSec":900,"externalFallback":true}},"passwordRecovery":{"enabled":false,"expiresMinutes":30,"codeLength":6,"maxAttempts":5,"resendCooldownSeconds":60,"email":{"enabled":false,"driver":"smtp","fromEmail":"","fromName":"","smtp":{"host":"","port":587,"username":"","password":"","encryption":"tls","timeoutSeconds":10}},"phone":{"enabled":false,"provider":"none","endpoint":"","method":"POST","apiKey":"","secret":"","headersJson":"","template":"您的验证码是 {code}，{minutes} 分钟内有效。","signName":""}}}',
+ NOW(),
+ NOW()
+);
 
 SET FOREIGN_KEY_CHECKS = 1;

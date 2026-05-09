@@ -11,7 +11,10 @@ Route::get('ping', function () {
 Route::get('/', 'Index/index');
 
 Route::rule('login', 'WebAuth/login', 'GET|POST');
-Route::rule('register', 'WebAuth/register', 'GET|POST');
+Route::post('register/send-code', 'WebAuth/sendRegisterCode');
+Route::rule('register', 'WebAuth/register', 'GET|POST')->completeMatch();
+Route::rule('forgot-password', 'WebAuth/forgotPassword', 'GET|POST')->completeMatch();
+Route::rule('reset-password', 'WebAuth/resetPassword', 'GET|POST')->completeMatch();
 Route::get('logout', function () {
     session('flash_error', '请从页面按钮退出登录');
     return redirect('/login');
@@ -35,11 +38,13 @@ Route::get('course/:id', 'Course/read')->completeMatch();
 Route::get('search', 'Search/index');
 
 Route::group(function () {
-    Route::get('me', 'Me/index');
-    Route::rule('me/profile', 'Me/profile', 'GET|POST');
-    Route::get('me/history', 'Me/history');
-    Route::get('me/favorites', 'Me/favorites');
-    Route::get('my-courses', 'Me/courses');
+    Route::post('me/bind-contact/send-code', 'Me/sendBindContactCode')->completeMatch();
+    Route::rule('me/bind-contact', 'Me/bindContact', 'GET|POST')->completeMatch();
+    Route::rule('me/profile', 'Me/profile', 'GET|POST')->completeMatch();
+    Route::get('me/history', 'Me/history')->completeMatch();
+    Route::get('me/favorites', 'Me/favorites')->completeMatch();
+    Route::get('my-courses', 'Me/courses')->completeMatch();
+    Route::get('me', 'Me/index')->completeMatch();
 })->middleware(WebAuth::class);
 
 Route::group('admin', function () {
@@ -102,16 +107,16 @@ Route::group('admin', function () {
     Route::post('watch-history/:id', 'AdminWatchHistory/update')->completeMatch();
 
     Route::get('comments', 'AdminComment/index');
-    Route::post('comments/:id/hide', 'AdminComment/hide');
-    Route::post('comments/:id/show', 'AdminComment/show');
-    Route::post('comments/:id/delete', 'AdminComment/delete');
+    Route::post('comments/:id/hide', 'AdminComment/hide')->completeMatch();
+    Route::post('comments/:id/show', 'AdminComment/show')->completeMatch();
+    Route::post('comments/:id/delete', 'AdminComment/delete')->completeMatch();
 
     Route::get('import-tasks', 'AdminImportTask/index');
     Route::get('import-tasks/create', 'AdminImportTask/create');
     Route::post('import-tasks', 'AdminImportTask/save')->completeMatch();
-    Route::get('import-tasks/:id', 'AdminImportTask/read');
-    Route::post('import-tasks/:id/process', 'AdminImportTask/process');
-    Route::post('import-tasks/:id/delete', 'AdminImportTask/delete');
+    Route::get('import-tasks/:id', 'AdminImportTask/read')->completeMatch();
+    Route::post('import-tasks/:id/process', 'AdminImportTask/process')->completeMatch();
+    Route::post('import-tasks/:id/delete', 'AdminImportTask/delete')->completeMatch();
     Route::post('import-tasks/:id', 'AdminImportTask/update')->completeMatch();
 
     Route::get('settings', 'AdminSetting/index');

@@ -52,13 +52,6 @@ class NetdiskShareParserService
         ];
     }
 
-    public function titleFromFileName(string $fileName): string
-    {
-        $title = trim(pathinfo($fileName, PATHINFO_FILENAME));
-
-        return $title !== '' ? $title : trim($fileName);
-    }
-
     private function provider(string $url): ?array
     {
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));

@@ -68,7 +68,7 @@ class VideoService
         ];
     }
 
-    public function stats(int $videoId, ?User $user = null): array
+    private function stats(int $videoId, ?User $user = null): array
     {
         $userId = $user ? (int) $user->id : 0;
 

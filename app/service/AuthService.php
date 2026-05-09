@@ -26,46 +26,74 @@ class AuthService
 
     public function register(array $data): array
     {
-        $email = $data['email'] ?? null;
-        $phone = $data['phone'] ?? null;
-
-        if (!$email && !$phone) {
-            throw new RuntimeException('邮箱或手机号至少填写一个', 400);
-        }
-
-        if (User::where('username', $data['username'])->find()) {
-            throw new RuntimeException('用户名已存在', 409);
-        }
-
-        if ($email && User::where('email', $email)->find()) {
-            throw new RuntimeException('邮箱已存在', 409);
-        }
-
-        if ($phone && User::where('phone', $phone)->find()) {
-            throw new RuntimeException('手机号已存在', 409);
-        }
-
-        $displayName = $data['display_name'] ?? $data['username'];
-
-        $user = User::create([
-            'username' => $data['username'],
-            'email' => $email,
-            'phone' => $phone,
-            'display_name' => $displayName ?: $data['username'],
+        $data = $this->normalizeRegisterData($data);
+        $type = $data['register_type'];
+        $account = $data['account'];
+        $displayName = $data['display_name'] !== '' ? $data['display_name'] : $account;
+        $payload = [
+            'display_name' => mb_substr($displayName, 0, 100),
             'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
             'role' => 'USER',
             'level' => 'NORMAL',
             'status' => 'ACTIVE',
-            'email_verified_at' => $email ? date('Y-m-d H:i:s') : null,
-            'activation_token' => bin2hex(random_bytes(32)),
-        ]);
+        ];
 
-        return $this->tokenPayload($user);
+        if ($type === 'username') {
+            $this->assertUsername($account);
+            $this->assertUnique('username', $account, '用户名已存在');
+            $payload += [
+                'username' => $account,
+                'email' => null,
+                'phone' => null,
+                'email_verified_at' => null,
+                'phone_verified_at' => null,
+            ];
+        } elseif ($type === 'email') {
+            $this->assertEmail($account);
+            $this->assertUnique('email', $account, '邮箱已存在');
+            $this->assertCode($data['code']);
+            (new AccountVerificationService())->verifyCode('register', 'email', $account, $data['code'], null);
+            $payload += [
+                'username' => $this->generateUsername($account, 'email'),
+                'email' => $account,
+                'phone' => null,
+                'email_verified_at' => date('Y-m-d H:i:s'),
+                'phone_verified_at' => null,
+            ];
+        } else {
+            $this->assertPhone($account);
+            $this->assertUnique('phone', $account, '手机号已存在');
+            $this->assertCode($data['code']);
+            (new AccountVerificationService())->verifyCode('register', 'phone', $account, $data['code'], null);
+            $payload += [
+                'username' => $this->generateUsername($account, 'phone'),
+                'email' => null,
+                'phone' => $account,
+                'email_verified_at' => null,
+                'phone_verified_at' => date('Y-m-d H:i:s'),
+            ];
+        }
+
+        return $this->tokenPayload(User::create($payload));
     }
 
     public function logout(): array
     {
         return ['logged_out' => true];
+    }
+
+    public function requestRegisterCode(string $channel, string $account, Request $request): void
+    {
+        $channel = trim($channel);
+        $account = trim($account);
+
+        if (!in_array($channel, ['email', 'phone'], true)) {
+            throw new RuntimeException('验证码渠道不正确', 400);
+        }
+
+        $this->assertRegisterAccount($channel, $account);
+        $this->assertUnique($channel, $account, $channel === 'email' ? '邮箱已存在' : '手机号已存在');
+        (new AccountVerificationService())->requestCode('register', $channel, $account, null, $request);
     }
 
     public function userFromRequest(Request $request): User
@@ -93,7 +121,7 @@ class AuthService
         return User::find($userId);
     }
 
-    public function parseBearerToken(Request $request): ?string
+    private function parseBearerToken(Request $request): ?string
     {
         $header = $request->header('Authorization') ?: $request->header('authorization');
 
@@ -106,7 +134,7 @@ class AuthService
         return $token !== '' ? $token : null;
     }
 
-    public function makeToken(User $user): string
+    private function makeToken(User $user): string
     {
         $config = $this->jwtConfig();
         $now = time();
@@ -127,7 +155,7 @@ class AuthService
         return $encodedHeader . '.' . $encodedPayload . '.' . $this->base64UrlEncode($signature);
     }
 
-    public function verifyToken(string $token): array
+    private function verifyToken(string $token): array
     {
         $parts = explode('.', $token);
 
@@ -192,8 +220,17 @@ class AuthService
             'level' => $user->level,
             'status' => $user->status,
             'valid_until' => $this->formatDate($user->valid_until),
+            'email_verified_at' => $this->formatDate($user->email_verified_at),
+            'phone_verified_at' => $this->formatDate($user->phone_verified_at),
+            'contact_bound' => $this->contactBound($user),
             'created_at' => $this->formatDate($user->created_at),
         ];
+    }
+
+    public function contactBound(User $user): bool
+    {
+        return ((string) ($user->email ?? '') !== '' && (bool) $user->email_verified_at)
+            || ((string) ($user->phone ?? '') !== '' && (bool) $user->phone_verified_at);
     }
 
     public function isPast($value): bool
@@ -205,6 +242,108 @@ class AuthService
         $timestamp = $this->timestamp($value);
 
         return $timestamp !== null && $timestamp < time();
+    }
+
+    public function normalizeRegisterData(array $data): array
+    {
+        $type = trim((string) ($data['register_type'] ?? ''));
+
+        if ($type === '') {
+            if (!empty($data['email']) && empty($data['username'])) {
+                $type = 'email';
+                $data['account'] = $data['email'];
+            } elseif (!empty($data['phone']) && empty($data['username'])) {
+                $type = 'phone';
+                $data['account'] = $data['phone'];
+            } else {
+                $type = 'username';
+                $data['account'] = $data['username'] ?? '';
+            }
+        }
+
+        if (!in_array($type, ['username', 'email', 'phone'], true)) {
+            throw new RuntimeException('注册方式不正确', 400);
+        }
+
+        return [
+            'register_type' => $type,
+            'account' => trim((string) ($data['account'] ?? '')),
+            'display_name' => trim((string) ($data['display_name'] ?? '')),
+            'password' => (string) ($data['password'] ?? ''),
+            'code' => trim((string) ($data['code'] ?? '')),
+        ];
+    }
+
+    public function assertRegisterAccount(string $type, string $account): void
+    {
+        if ($type === 'username') {
+            $this->assertUsername($account);
+        } elseif ($type === 'email') {
+            $this->assertEmail($account);
+        } elseif ($type === 'phone') {
+            $this->assertPhone($account);
+        } else {
+            throw new RuntimeException('注册方式不正确', 400);
+        }
+    }
+
+    public function assertUnique(string $field, string $value, string $message, ?int $exceptUserId = null): void
+    {
+        $query = User::where($field, $value);
+
+        if ($exceptUserId) {
+            $query->where('id', '<>', $exceptUserId);
+        }
+
+        if ($query->find()) {
+            throw new RuntimeException($message, 409);
+        }
+    }
+
+    public function assertUsername(string $username): void
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]{3,64}$/', $username)) {
+            throw new RuntimeException('用户名只能包含字母、数字、下划线或短横线，长度为3到64位', 400);
+        }
+    }
+
+    public function assertEmail(string $email): void
+    {
+        if ($email === '' || mb_strlen($email) > 191 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('邮箱格式不正确', 400);
+        }
+    }
+
+    public function assertPhone(string $phone): void
+    {
+        if (!preg_match('/^\+?[0-9]{6,20}$/', $phone) || mb_strlen($phone) > 32) {
+            throw new RuntimeException('手机号格式不正确', 400);
+        }
+    }
+
+    private function assertCode(string $code): void
+    {
+        if ($code === '') {
+            throw new RuntimeException('请输入验证码', 400);
+        }
+    }
+
+    private function generateUsername(string $account, string $type): string
+    {
+        $base = $type === 'email' ? explode('@', $account)[0] : 'u' . substr(preg_replace('/\D+/', '', $account), -4);
+        $base = preg_replace('/[^A-Za-z0-9_-]+/', '_', (string) $base) ?: 'u';
+        $base = trim($base, '_-') ?: 'u';
+        $base = substr($base, 0, 40);
+
+        for ($i = 0; $i < 8; $i++) {
+            $username = $base . '_' . bin2hex(random_bytes(4));
+
+            if (!User::where('username', $username)->find()) {
+                return $username;
+            }
+        }
+
+        throw new RuntimeException('无法生成唯一用户名，请稍后重试', 500);
     }
 
     private function tokenPayload(User $user): array

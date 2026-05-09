@@ -161,7 +161,7 @@ class DatabaseInstaller
     private function projectTables(): array
     {
         return [
-            'users', 'courses', 'categories', 'tags', 'lessons', 'videos', 'video_tags', 'video_assets',
+            'users', 'account_verifications', 'password_resets', 'courses', 'categories', 'tags', 'lessons', 'videos', 'video_tags', 'video_assets',
             'grants', 'watch_histories', 'favorites', 'video_likes', 'comments', 'import_tasks',
             'play_url_caches', 'site_settings',
         ];

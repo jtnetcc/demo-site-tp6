@@ -29,7 +29,14 @@ class Auth
 
     public function register(Request $request)
     {
-        $data = $request->post();
+        $auth = new AuthService();
+
+        try {
+            $data = $auth->normalizeRegisterData($request->post());
+        } catch (RuntimeException $e) {
+            return $this->exception($e);
+        }
+
         $validate = new RegisterValidate();
 
         if (!$validate->check($data)) {
@@ -37,14 +44,29 @@ class Auth
         }
 
         try {
-            $result = (new AuthService())->register($data);
+            $result = $auth->register($data);
             return $this->success($result);
         } catch (RuntimeException $e) {
             return $this->exception($e);
         }
     }
 
-    public function logout(Request $request)
+    public function sendRegisterCode(Request $request)
+    {
+        try {
+            (new AuthService())->requestRegisterCode(
+                (string) $request->post('channel', ''),
+                (string) $request->post('account', ''),
+                $request
+            );
+
+            return $this->success([], '验证码已发送');
+        } catch (RuntimeException $e) {
+            return $this->exception($e);
+        }
+    }
+
+    public function logout()
     {
         return $this->success((new AuthService())->logout());
     }

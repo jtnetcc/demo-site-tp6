@@ -15,16 +15,59 @@ CREATE TABLE IF NOT EXISTS `users` (
   `status` ENUM('ACTIVE', 'DISABLED', 'PENDING') NOT NULL DEFAULT 'ACTIVE',
   `valid_until` DATETIME NULL,
   `email_verified_at` DATETIME NULL,
-  `activation_token` VARCHAR(191) NULL,
+  `phone_verified_at` DATETIME NULL,
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_users_username` (`username`),
   UNIQUE KEY `uk_users_email` (`email`),
   UNIQUE KEY `uk_users_phone` (`phone`),
-  UNIQUE KEY `uk_users_activation_token` (`activation_token`),
   KEY `idx_users_created_at` (`created_at`),
   KEY `idx_users_status_role` (`status`, `role`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `account_verifications` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NULL,
+  `purpose` ENUM('register', 'bind') NOT NULL,
+  `channel` ENUM('email', 'phone') NOT NULL,
+  `recipient_hash` CHAR(64) NOT NULL,
+  `code_hash` VARCHAR(255) NOT NULL,
+  `attempt_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `request_ip` VARCHAR(64) NULL,
+  `user_agent` VARCHAR(500) NULL,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_account_verifications_lookup` (`purpose`, `channel`, `recipient_hash`),
+  KEY `idx_account_verifications_user` (`user_id`),
+  KEY `idx_account_verifications_expires_at` (`expires_at`),
+  CONSTRAINT `fk_account_verifications_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `password_resets` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `channel` ENUM('email', 'phone') NOT NULL,
+  `selector` VARCHAR(64) NULL,
+  `token_hash` VARCHAR(255) NULL,
+  `code_hash` VARCHAR(255) NULL,
+  `recipient_hash` CHAR(64) NOT NULL,
+  `attempt_count` INT UNSIGNED NOT NULL DEFAULT 0,
+  `request_ip` VARCHAR(64) NULL,
+  `user_agent` VARCHAR(500) NULL,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_password_resets_selector` (`selector`),
+  KEY `idx_password_resets_user_channel` (`user_id`, `channel`),
+  KEY `idx_password_resets_expires_at` (`expires_at`),
+  KEY `idx_password_resets_recipient_hash` (`recipient_hash`),
+  CONSTRAINT `fk_password_resets_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `courses` (

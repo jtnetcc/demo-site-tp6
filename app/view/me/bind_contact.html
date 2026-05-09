@@ -1,0 +1,81 @@
+{layout name="layout/base" /}
+{include file="partials/account_nav" /}
+<section class="section page-head">
+    <div><p class="page-kicker">CONTACT</p><h1>绑定联系方式</h1><p>绑定并验证邮箱或手机号后，才能继续使用登录后功能和密码找回能力。</p></div>
+</section>
+<section class="section split-layout">
+    <div class="card">
+        <h2>绑定邮箱或手机号</h2>
+        {if condition="!$channels.enabled"}
+        <div class="flash err" role="alert"><div><strong>提示</strong><span>验证码发送功能暂未开启，请联系管理员处理。</span></div></div>
+        {/if}
+        <form method="post" action="/me/bind-contact" id="bind-contact-form" {if condition="!$channels.enabled"}aria-disabled="true"{/if}>
+            <input type="hidden" name="_csrf" value="{$webCsrfToken|default=''}">
+            <label>绑定方式</label>
+            <select name="channel" id="bind-channel" required>
+                <option value="email" {if condition="!$channels.email"}disabled{/if}>邮箱</option>
+                <option value="phone" {if condition="!$channels.phone"}disabled{/if}>手机号</option>
+            </select>
+            <label id="bind-account-label">邮箱</label>
+            <input name="account" id="bind-account" required maxlength="191" autocomplete="email" placeholder="请输入邮箱地址">
+            <label>验证码</label>
+            <div class="form-row">
+                <input name="code" id="bind-code" required maxlength="16" inputmode="numeric" autocomplete="one-time-code" placeholder="请输入验证码">
+                <button class="button secondary" type="button" id="send-bind-code">发送验证码</button>
+            </div>
+            <p class="muted" id="bind-message"></p>
+            <div class="section"><button class="button" type="submit" id="bind-submit" {if condition="!$channels.enabled"}disabled{/if}>完成绑定</button></div>
+        </form>
+    </div>
+    <aside class="card">
+        <h2>当前绑定状态</h2>
+        <div class="list-card">
+            <div class="list-item"><span>邮箱</span><span>{$user.email|default='未绑定'} {if condition="$user.email_verified_at"}<span class="badge gray">已验证</span>{/if}</span></div>
+            <div class="list-item"><span>手机号</span><span>{$user.phone|default='未绑定'} {if condition="$user.phone_verified_at"}<span class="badge gray">已验证</span>{/if}</span></div>
+        </div>
+        <p class="muted">更换联系方式也需要重新接收验证码。</p>
+    </aside>
+</section>
+{if condition="$channels.email"}<span data-bind-channel-enabled="email" hidden></span>{/if}
+{if condition="$channels.phone"}<span data-bind-channel-enabled="phone" hidden></span>{/if}
+<script>
+(function(){
+    var form=document.getElementById('bind-contact-form');
+    if(!form){return;}
+    var channel=document.getElementById('bind-channel');
+    var account=document.getElementById('bind-account');
+    var label=document.getElementById('bind-account-label');
+    var sendButton=document.getElementById('send-bind-code');
+    var submitButton=document.getElementById('bind-submit');
+    var message=document.getElementById('bind-message');
+    var csrf=form.querySelector('input[name="_csrf"]').value;
+    var enabled={email:!!document.querySelector('[data-bind-channel-enabled="email"]'),phone:!!document.querySelector('[data-bind-channel-enabled="phone"]')};
+    function update(){
+        if(!enabled.email&&enabled.phone){channel.value='phone';}
+        var type=channel.value||'email';
+        if(!enabled[type]){type=enabled.email?'email':(enabled.phone?'phone':type);channel.value=type;}
+        label.textContent=type==='phone'?'手机号':'邮箱';
+        account.placeholder=type==='phone'?'请输入手机号':'请输入邮箱地址';
+        account.autocomplete=type==='phone'?'tel':'email';
+        sendButton.textContent=type==='phone'?'发送短信验证码':'发送邮箱验证码';
+        sendButton.disabled=!enabled[type];
+        if(submitButton){submitButton.disabled=!enabled[type];}
+        message.textContent=enabled[type]?'':'当前验证码渠道暂未开启，请联系管理员。';
+    }
+    if(!enabled.email&&enabled.phone){channel.value='phone';}
+    form.addEventListener('submit',function(event){if(!enabled[channel.value]){event.preventDefault();message.textContent='当前验证码渠道暂未开启，请联系管理员。';}});
+    channel.addEventListener('change',update);
+    sendButton.addEventListener('click',function(){
+        var type=channel.value;
+        if(!enabled[type]){return;}
+        message.textContent='正在发送...';
+        sendButton.disabled=true;
+        fetch('/me/bind-contact/send-code',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8','X-Requested-With':'XMLHttpRequest'},body:new URLSearchParams({_csrf:csrf,channel:type,account:account.value})})
+            .then(function(response){return response.json().then(function(payload){return {ok:response.ok,payload:payload};});})
+            .then(function(result){message.textContent=result.ok?(result.payload.message||'验证码已发送'):(result.payload.error||'验证码发送失败');})
+            .catch(function(){message.textContent='验证码发送失败，请稍后重试';})
+            .finally(function(){sendButton.disabled=!enabled[channel.value];});
+    });
+    update();
+})();
+</script>

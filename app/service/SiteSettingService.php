@@ -8,6 +8,11 @@ class SiteSettingService
 {
     public function settings(): array
     {
+        return $this->publicSettings($this->settingsWithSecrets());
+    }
+
+    public function settingsWithSecrets(): array
+    {
         $setting = SiteSetting::find(1);
         $data = $setting ? [
             'base_info' => is_array($setting->base_info) ? $setting->base_info : [],
@@ -28,6 +33,26 @@ class SiteSettingService
         $settings['seo']['ogImageUrl'] = $this->assetUrl((string) ($settings['seo']['ogImageObjectKey'] ?? ''));
         $settings['seo']['shareImageUrl'] = $this->assetUrl((string) ($settings['seo']['shareImageObjectKey'] ?? ''));
         $settings['seo']['homeKeywordsText'] = implode(',', array_filter(array_map('strval', (array) ($settings['seo']['homeKeywords'] ?? []))));
+
+        return $settings;
+    }
+
+    private function publicSettings(array $settings): array
+    {
+        if (isset($settings['other']['netdisk']['baidu'])) {
+            $settings['other']['netdisk']['baidu']['accessToken'] = '';
+            $settings['other']['netdisk']['baidu']['cookie'] = '';
+        }
+
+        if (isset($settings['other']['passwordRecovery']['email']['smtp'])) {
+            $settings['other']['passwordRecovery']['email']['smtp']['password'] = '';
+        }
+
+        if (isset($settings['other']['passwordRecovery']['phone'])) {
+            $settings['other']['passwordRecovery']['phone']['apiKey'] = '';
+            $settings['other']['passwordRecovery']['phone']['secret'] = '';
+            $settings['other']['passwordRecovery']['phone']['headersJson'] = '';
+        }
 
         return $settings;
     }
@@ -109,6 +134,38 @@ class SiteSettingService
                         'cookie' => '',
                         'directUrlTtlSec' => 900,
                         'externalFallback' => true,
+                    ],
+                ],
+                'passwordRecovery' => [
+                    'enabled' => false,
+                    'expiresMinutes' => 30,
+                    'codeLength' => 6,
+                    'maxAttempts' => 5,
+                    'resendCooldownSeconds' => 60,
+                    'email' => [
+                        'enabled' => false,
+                        'driver' => 'smtp',
+                        'fromEmail' => '',
+                        'fromName' => '',
+                        'smtp' => [
+                            'host' => '',
+                            'port' => 587,
+                            'username' => '',
+                            'password' => '',
+                            'encryption' => 'tls',
+                            'timeoutSeconds' => 10,
+                        ],
+                    ],
+                    'phone' => [
+                        'enabled' => false,
+                        'provider' => 'none',
+                        'endpoint' => '',
+                        'method' => 'POST',
+                        'apiKey' => '',
+                        'secret' => '',
+                        'headersJson' => '',
+                        'template' => '您的验证码是 {code}，{minutes} 分钟内有效。',
+                        'signName' => '',
                     ],
                 ],
             ],

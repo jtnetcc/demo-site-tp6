@@ -27,6 +27,7 @@ class AdminSettingService
         $form['storage'] = $form['other']['storage'];
         $form['homepage'] = $this->homepage($form['other']['homepage'] ?? []);
         $form['netdisk'] = $form['other']['netdisk'];
+        $form['passwordRecovery'] = $this->passwordRecovery($form['other']['passwordRecovery'] ?? [], $form['other']['passwordRecovery'] ?? []);
 
         return ['setting' => $setting, 'form' => $form, 'json' => $json];
     }
@@ -34,6 +35,7 @@ class AdminSettingService
     public function update(array $data): SiteSetting
     {
         $setting = $this->setting();
+        $existingOther = $this->mergeDefaults('other', is_array($setting->other) ? $setting->other : []);
         $payload = [
             'base_info' => [
                 'siteName' => $this->string($data['base_info']['siteName'] ?? ''),
@@ -90,6 +92,7 @@ class AdminSettingService
                         'externalFallback' => !empty($data['netdisk']['baidu']['externalFallback']),
                     ],
                 ],
+                'passwordRecovery' => $this->passwordRecovery($data['passwordRecovery'] ?? [], $existingOther['passwordRecovery'] ?? []),
             ],
         ];
 
@@ -109,6 +112,7 @@ class AdminSettingService
             }
         }
 
+        $payload = $this->applyDefaultResets($payload, (array) ($data['reset_defaults'] ?? []));
         $setting->save($payload);
 
         return $setting;
@@ -123,6 +127,38 @@ class AdminSettingService
         }
 
         return SiteSetting::create(array_merge(['id' => 1], $this->defaults()));
+    }
+
+    private function applyDefaultResets(array $payload, array $resets): array
+    {
+        $defaults = $this->defaults();
+
+        foreach (['base_info', 'header', 'footer', 'seo'] as $field) {
+            if (!empty($resets[$field])) {
+                $payload[$field] = $defaults[$field];
+            }
+        }
+
+        if (!empty($resets['storage'])) {
+            $payload['other']['storage'] = $defaults['other']['storage'];
+            $payload['other']['netdisk'] = $defaults['other']['netdisk'];
+        }
+
+        if (!empty($resets['passwordRecovery'])) {
+            $payload['other']['passwordRecovery'] = $defaults['other']['passwordRecovery'];
+        }
+
+        if (!empty($resets['homepage'])) {
+            $payload['other']['homepage'] = $defaults['other']['homepage'];
+        }
+
+        if (!empty($resets['other'])) {
+            foreach (['maintenanceEnabled', 'maintenanceNotice', 'defaultLanguage', 'timezone'] as $key) {
+                $payload['other'][$key] = $defaults['other'][$key];
+            }
+        }
+
+        return $payload;
     }
 
     private function defaults(): array
@@ -154,6 +190,62 @@ class AdminSettingService
         }
 
         return array_values(array_filter(array_map([$this, 'string'], preg_split('/[,，\r\n]+/', (string) $value))));
+    }
+
+    private function passwordRecovery(array $data, array $existing): array
+    {
+        $defaults = $this->defaults()['other']['passwordRecovery'];
+        $existing = array_replace_recursive($defaults, $existing);
+        $data = array_replace_recursive($defaults, $data);
+        $smtpPassword = $this->string($data['email']['smtp']['password'] ?? '');
+        $phoneApiKey = $this->string($data['phone']['apiKey'] ?? '');
+        $phoneSecret = $this->string($data['phone']['secret'] ?? '');
+        $phoneHeadersJson = $this->string($data['phone']['headersJson'] ?? '');
+
+        return [
+            'enabled' => !empty($data['enabled']),
+            'expiresMinutes' => $this->intRange($data['expiresMinutes'] ?? 30, 5, 120),
+            'codeLength' => $this->intRange($data['codeLength'] ?? 6, 4, 8),
+            'maxAttempts' => $this->intRange($data['maxAttempts'] ?? 5, 3, 10),
+            'resendCooldownSeconds' => $this->intRange($data['resendCooldownSeconds'] ?? 60, 30, 600),
+            'email' => [
+                'enabled' => !empty($data['email']['enabled']),
+                'driver' => $this->enum($data['email']['driver'] ?? 'smtp', ['smtp', 'mail'], 'smtp'),
+                'fromEmail' => $this->string($data['email']['fromEmail'] ?? ''),
+                'fromName' => $this->string($data['email']['fromName'] ?? ''),
+                'smtp' => [
+                    'host' => $this->string($data['email']['smtp']['host'] ?? ''),
+                    'port' => $this->intRange($data['email']['smtp']['port'] ?? 587, 1, 65535),
+                    'username' => $this->string($data['email']['smtp']['username'] ?? ''),
+                    'password' => $smtpPassword !== '' ? $smtpPassword : $this->string($existing['email']['smtp']['password'] ?? ''),
+                    'encryption' => $this->enum($data['email']['smtp']['encryption'] ?? 'tls', ['none', 'ssl', 'tls'], 'tls'),
+                    'timeoutSeconds' => $this->intRange($data['email']['smtp']['timeoutSeconds'] ?? 10, 3, 30),
+                ],
+            ],
+            'phone' => [
+                'enabled' => !empty($data['phone']['enabled']),
+                'provider' => $this->enum($data['phone']['provider'] ?? 'none', ['none', 'generic_http'], 'none'),
+                'endpoint' => $this->string($data['phone']['endpoint'] ?? ''),
+                'method' => $this->enum(strtoupper($this->string($data['phone']['method'] ?? 'POST')), ['GET', 'POST'], 'POST'),
+                'apiKey' => $phoneApiKey !== '' ? $phoneApiKey : $this->string($existing['phone']['apiKey'] ?? ''),
+                'secret' => $phoneSecret !== '' ? $phoneSecret : $this->string($existing['phone']['secret'] ?? ''),
+                'headersJson' => $phoneHeadersJson !== '' ? $phoneHeadersJson : $this->string($existing['phone']['headersJson'] ?? ''),
+                'template' => $this->string($data['phone']['template'] ?? '您的验证码是 {code}，{minutes} 分钟内有效。'),
+                'signName' => $this->string($data['phone']['signName'] ?? ''),
+            ],
+        ];
+    }
+
+    private function intRange(mixed $value, int $min, int $max): int
+    {
+        return max($min, min($max, (int) $value));
+    }
+
+    private function enum(mixed $value, array $allowed, string $default): string
+    {
+        $value = $this->string($value);
+
+        return in_array($value, $allowed, true) ? $value : $default;
     }
 
     private function homepage(array $data): array

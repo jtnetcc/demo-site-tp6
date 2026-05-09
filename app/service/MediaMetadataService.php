@@ -33,7 +33,7 @@ class MediaMetadataService
         ];
     }
 
-    public function http(string $url): array
+    private function http(string $url): array
     {
         $path = (string) parse_url($url, PHP_URL_PATH);
         $metadata = [

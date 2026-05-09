@@ -80,7 +80,6 @@ abstract class WebController
 
     protected function requireAjaxUser(Request $request): ?User
     {
-        $request->isAjax();
         $user = $this->currentUser();
 
         return $user ?: null;

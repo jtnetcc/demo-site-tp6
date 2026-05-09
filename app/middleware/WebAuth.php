@@ -24,8 +24,10 @@ class WebAuth
             return $this->unauthenticated($request);
         }
 
+        $auth = new AuthService();
+
         try {
-            (new AuthService())->assertUserCanLogin($user);
+            $auth->assertUserCanLogin($user);
         } catch (RuntimeException $e) {
             session('web_user_id', null);
             session('web_user', null);
@@ -38,7 +40,38 @@ class WebAuth
 
         $request->user = $user;
 
+        if (!$auth->contactBound($user) && !$this->allowsUnboundContact($request)) {
+            return $this->contactBindingRequired($request);
+        }
+
         return $next($request);
+    }
+
+    private function allowsUnboundContact($request): bool
+    {
+        $path = $this->requestPath($request);
+
+        return in_array($path, ['/me/bind-contact', '/me/bind-contact/send-code', '/logout'], true);
+    }
+
+    private function contactBindingRequired($request)
+    {
+        $bindUrl = '/me/bind-contact';
+
+        if ($this->isAjax($request)) {
+            return json(['error' => '请先绑定邮箱或手机号', 'code' => 428, 'bind_url' => $bindUrl], 428);
+        }
+
+        session('flash_error', '请先绑定邮箱或手机号');
+
+        return redirect($bindUrl);
+    }
+
+    private function requestPath($request): string
+    {
+        $path = parse_url((string) $request->url(true), PHP_URL_PATH) ?: '/';
+
+        return '/' . trim($path, '/');
     }
 
     private function isStateChanging($request): bool
