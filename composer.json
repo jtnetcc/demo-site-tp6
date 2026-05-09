@@ -1,6 +1,7 @@
 {
   "name": "demo-site/tp6",
   "description": "ThinkPHP 6 online learning demo site",
+  "license": "MIT",
   "type": "project",
   "require": {
     "php": ">=8.1",
